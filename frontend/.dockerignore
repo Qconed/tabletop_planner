@@ -1,0 +1,29 @@
+# .dockerignore for frontend
+
+# dependencies (no need for node_modules because npm install should be run in container)
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+.angular/
+
+# Environment files and secrets
+.env
+
+# IDE
+.vscode
+.idea
+.editorconfig
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# dockerfiles
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.gitignore
+README.md
+

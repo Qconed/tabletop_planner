@@ -1,0 +1,20 @@
+FROM node:20-slim
+WORKDIR /app
+
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# install prisma dependencies only, the rest of the deps will be mounted at runtime
+RUN npm i prisma @prisma/client
+# RUN npm ci --include=dev
+
+COPY ./prisma ./prisma
+
+# installing required ssl system dependency for prisma (missing on slim image)
+RUN apt update && apt install -y openssl
+
+# Prisma client generation and migrations will happen at runtime
+# using the dev:compose script
+
+EXPOSE "3000"
+CMD ["npm" , "run" , "dev:compose"]

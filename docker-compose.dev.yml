@@ -1,0 +1,117 @@
+# This compose contains environment variable values for the sole purpose of dev
+# In prod, these values should be written in a .env file
+
+networks:
+  ttp-network:
+    driver: bridge
+    name: ttp-network-dev
+services:
+  postgres:
+    networks:
+      - ttp-network  
+    image: postgres:16-alpine
+    container_name: ttp-postgres
+    restart: "unless-stopped"
+    ports:
+      - 5432:5432
+    environment:
+      # @todo: in prod these will HAVE to be defined in the .env file
+      POSTGRES_USER: TODO_USER
+      POSTGRES_PASSWORD: TODO_PASSWORD
+      POSTGRES_DB: TODO_DB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U TODO_USER -d TODO_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ttp_data:/var/lib/postgresql/data
+  # =============================
+  backend:
+    networks:
+      - ttp-network
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: ttp-backend-dev
+    restart: unless-stopped
+    ports:
+      - 3000:3000 # web server: host 3000 to container port 3000
+    environment:
+      DATABASE_URL: "postgresql://TODO_USER:TODO_PASSWORD@postgres:5432/TODO_DB?schema=public"
+    
+      # Server configuration
+      NODE_ENV: development # enable detailed error messages, stack traces for node
+      PORT: 3000      # listen on the container port 3000
+      HOST: 0.0.0.0   # listen to all network interfaces, required for the docker network config
+
+      # CORS configuration
+      # @todo: when updating app to https, will have to change the url
+      # @todo: read value from .env when in production
+      FRONTEND_ORIGIN: "http://localhost:4200"
+
+      # @todo: read value from .env when in production
+      JWT_SECRET: your-super-secure-jwt-secret-minimum-32-characters-long
+
+    volumes:
+      # in dev version of container, mount the src code for hot reload
+      - ./backend:/app:cached # cached enables slow refresh latency
+      - ./backend/node_modules:/app/node_modules # dependencies at runtime will be the deps installed locally
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["npm", "run","dev:compose"]
+    # use the container in an interactive terminal (terminal colors + allow standard input)
+    tty: true
+    stdin_open: true
+  prisma-studio: # direct db access using prisma (dev version only)
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: ttp-prisma-studio
+    restart: unless-stopped
+    ports: 
+      - "5555:5555"
+    environment:
+      DATABASE_URL: "postgresql://TODO_USER:TODO_PASSWORD@postgres:5432/TODO_DB?schema=public"
+
+    volumes:
+      - ./backend/prisma:/app/prisma:cached
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ttp-network
+    command: ["npm", "run", "prisma:studio"]
+    tty: true
+    stdin_open: true
+  
+  # ===========================
+  # ===========================
+
+  frontend:
+    networks:
+      - ttp-network
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ttp-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    environment:
+      NODE_ENV: development
+      NG_CLI_ANALYTICS: "false" # Prevents Angular CLI from hanging on analytics consent prompt
+
+    volumes:
+      # Source code mounts for dev purposes
+      - ./frontend:/app:cached
+      - ./frontend/node_modules:/app/node_modules
+
+    command: ["npm","run","start:dev"]
+    tty: true
+    stdin_open: true
+
+volumes:
+  ttp_data:
+    name: ttp-postgres-data

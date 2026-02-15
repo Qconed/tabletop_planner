@@ -2,16 +2,10 @@
 **Table Top Planner**
 
 # Description
+A Web app to planning tabletop games festivals.
 
 
-# Installing, Pre-requisites
-
-
-# Launching the application as DEV
-
-
-
-# Running in a PROD environment
+# Installing & Pre-requisites
 
 
 

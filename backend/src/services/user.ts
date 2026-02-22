@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PasswordService } from './password.js';
-import type { User, PublicUser, RegisterRequest, LoginRequest } from '../models/auth.model.js';
+import type { User, PublicUser, RegisterRequest, LoginRequest } from '../schemas/user.schemas.js';
 
 const prisma = new PrismaClient();
 

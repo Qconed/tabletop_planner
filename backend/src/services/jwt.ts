@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/index.js';
-import type { JWTPayload } from '../models/auth.model.js';
+import type { JWTPayload } from '../schemas/user.schemas.js';
 
 export class JWTService {
   /**
@@ -15,7 +15,7 @@ export class JWTService {
           expiresIn: env.JWT_EXPIRES_IN,
           issuer: 'tabletop-planner',
           audience: 'tabletop-planner-users'
-        },
+        } as any, // Cast to 'any' because jsonwebtoken's SignOptions type is strict about expiresIn and doesn't accept string union types well
         (error, token) => {
           if (error || !token) {
             reject(error || new Error('Failed to generate token'));

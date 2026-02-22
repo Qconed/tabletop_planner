@@ -23,7 +23,7 @@ async function buildFastify() {
   await fastify.register(import('./routes/auth.routes.js'), { prefix: '/api/auth' });
 
   // Health check route
-  fastify.get('/health', async (request, reply) => {
+  fastify.get('/health', async (_request, _reply) => {
     return { 
       status: 'ok', 
       timestamp: new Date().toISOString(),
@@ -32,7 +32,7 @@ async function buildFastify() {
   });
 
   // Main route
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (_request, _reply) => {
     return { 
       message: 'Fastify server is running!',
       version: '1.0.0',

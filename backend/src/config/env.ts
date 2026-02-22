@@ -11,7 +11,7 @@ dotenvConfig(); // Also load from default .env if it exists
 const envSchema = z.object({
   // Server Configuration
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
+  PORT: z.string().default('3000').transform(Number).pipe(z.number().min(1).max(65535)),
   HOST: z.string().default('0.0.0.0'),
 
   // Database Configuration  

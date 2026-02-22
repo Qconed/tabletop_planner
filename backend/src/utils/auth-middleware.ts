@@ -5,11 +5,8 @@ declare module 'fastify' {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
-}
-
-declare module '@fastify/request' {
   interface FastifyRequest {
-    user: {
+    user?: { // user might be undefined when making the request, forces checking it
       userId: string;
       email: string;
       username: string;

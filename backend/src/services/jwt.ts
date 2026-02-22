@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/index.js';
-import type { JWTPayload } from '../types/auth.js';
+import type { JWTPayload } from '../models/auth.model.js';
 
 export class JWTService {
   /**

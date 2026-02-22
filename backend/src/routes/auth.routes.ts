@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { UserService } from '../services/user.js';
 import { JWTService } from '../services/jwt.js';
-import type { AuthResponse, ErrorResponse } from '../types/auth.js';
+import type { AuthResponse, ErrorResponse } from '../models/auth.model.js';
 
 // Input validation schemas
 const registerSchema = z.object({
@@ -197,11 +197,29 @@ export default async function authRoutes(fastify: FastifyInstance) {
   // Protected route to get current user
   fastify.get<{
     Reply: { user: any } | ErrorResponse;
-  }>('/me', async (request, reply) => {
+  }>('/me', {
+    preHandler: fastify.authenticate
+  }, async (request, reply) => {
     try {
-      // For now, let's skip authentication and return a test response
+      // Get the authenticated user from the request
+      const userPayload = (request as any).user;
+      
+      if (!userPayload) {
+        return reply.code(401).send({
+          error: 'Authentication Failed',
+          message: 'User not authenticated',
+          statusCode: 401
+        });
+      }
+
+      // Return the user data (already contained in the JWT payload)
       return reply.send({
-        message: 'Protected route - authentication middleware will be added'
+        user: {
+          id: userPayload.userId,
+          email: userPayload.email,
+          username: userPayload.username,
+          createdAt: new Date() // This could be enhanced to fetch from database
+        }
       });
 
     } catch (error: any) {

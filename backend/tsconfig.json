@@ -44,7 +44,7 @@
       "@/config/*": ["./src/config/*"],
       "@/routes/*": ["./src/routes/*"],
       "@/services/*": ["./src/services/*"],
-      "@/types/*": ["./src/types/*"],
+      "@/types/*": ["src/models/*"],
       "@/utils/*": ["./src/utils/*"]
     }
   },

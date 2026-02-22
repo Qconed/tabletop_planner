@@ -4,11 +4,16 @@
     // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
-    // Environment Settings
+    "baseUrl": "./src",
+    // Environment Settings  
     "target": "es2022", // LTS industry standard version of JS
     "module": "nodenext",
     "types": ["node"],
     "lib": ["esnext"],
+    // Module Resolution  
+    "moduleResolution": "nodenext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     // Other Outputs
     "sourceMap": true,
     "declaration": true,
@@ -27,12 +32,21 @@
 
     // Recommended Options
     "strict": true,
-    "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    
+    // Path Mapping for cleaner imports
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/routes/*": ["./src/routes/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/utils/*": ["./src/utils/*"]
+    }
   },
   "include":["src/**/*"],
   "exclude": ["node_modules", "dist"]

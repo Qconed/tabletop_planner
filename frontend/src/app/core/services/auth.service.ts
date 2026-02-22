@@ -3,14 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import {PublicUser,RegisterRequest,AuthResponse,LoginRequest} from '../models/auth.model';
+import { ApiConfigService } from './api-config.service';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly API_BASE = 'http://localhost:3000/api/auth';
-  
   // Use signal for current user state
   private readonly _currentUser = signal<PublicUser | null>(null);
   private readonly _isAuthenticated = signal<boolean>(false);
@@ -19,7 +18,10 @@ export class AuthService {
   readonly currentUser = this._currentUser.asReadonly();
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private apiConfig: ApiConfigService
+  ) {
     this.checkAuthStatus();
   }
 
@@ -38,7 +40,7 @@ export class AuthService {
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_BASE}/register`, userData, {
+    return this.http.post<AuthResponse>(this.apiConfig.getApiUrl('/auth/register'), userData, {
       withCredentials: true // Important for cookies
     }).pipe(
       tap(response => {
@@ -50,7 +52,7 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_BASE}/login`, credentials, {
+    return this.http.post<AuthResponse>(this.apiConfig.getApiUrl('/auth/login'), credentials, {
       withCredentials: true // Important for cookies
     }).pipe(
       tap(response => {
@@ -62,7 +64,7 @@ export class AuthService {
   }
 
   logout(): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.API_BASE}/logout`, {}, {
+    return this.http.post<{ message: string }>(this.apiConfig.getApiUrl('/auth/logout'), {}, {
       withCredentials: true
     }).pipe(
       tap(() => {
@@ -74,7 +76,7 @@ export class AuthService {
   }
 
   private getCurrentUser(): Observable<{ user: PublicUser }> {
-    return this.http.get<{ user: PublicUser }>(`${this.API_BASE}/me`, {
+    return this.http.get<{ user: PublicUser }>(this.apiConfig.getApiUrl('/auth/me'), {
       withCredentials: true
     });
   }

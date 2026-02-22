@@ -4,8 +4,8 @@
 # Development Workflow
 
 ```bash
-# Start all services in development mode
-docker compose -f docker-compose.dev.yml up --build -d
+# Start all services in development mode, using the dev envrionment file
+docker compose -f docker-compose.dev.yml --env-file .env.dev up --build -d
 
 # Frontend: http://localhost:4200
 # Backend: http://localhost:3000  
@@ -39,3 +39,35 @@ After pulling DB changes, restart the backend container with `docker compose -f 
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up --build
 ```
+
+
+### Making API Calls
+
+All services should use the `ApiConfigService` to construct API URLs:
+
+```typescript
+import { ApiConfigService } from './api-config.service';
+
+@Injectable({ providedIn: 'root' })
+export class MyService {
+  constructor(
+    private http: HttpClient,
+    private apiConfig: ApiConfigService
+  ) {}
+
+  getData(): Observable<any> {
+    // This will use BASE_API + '/data'
+    return this.http.get(this.apiConfig.getApiUrl('/data'));
+  }
+}
+```
+
+#### API Config Service Methods
+
+- `getApiUrl('/endpoint')`: Returns `BASE_API + '/endpoint'`
+- `getBaseApi()`: Returns the base API URL
+
+#### Development vs Production
+
+- **Development**: Run `ng serve` (default configuration uses development environment)
+- **Production**: Run `ng build --configuration production`

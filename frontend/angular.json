@@ -65,7 +65,10 @@
               "buildTarget": "tabletopplanner-frontend:build:production"
             },
             "development": {
-              "buildTarget": "tabletopplanner-frontend:build:development"
+              "buildTarget": "tabletopplanner-frontend:build:development",
+              "ssl": true,
+              "sslCert": "certs/localhost.pem",
+              "sslKey": "certs/localhost-key.pem"
             }
           },
           "defaultConfiguration": "development"

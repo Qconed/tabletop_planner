@@ -3,8 +3,54 @@
 
 # Development Workflow
 
+## HTTPS Development Setup
+
+The development environment uses HTTPS with self-signed certificates. Follow these steps for initial setup:
+
+### Install mkcert
 ```bash
-# Start all services in development mode, using the dev envrionment file
+# Ubuntu/Debian
+sudo apt install libnss3-tools
+wget -O mkcert https://github.com/FiloSottile/mkcert/releases/latest/download/mkcert-v1.4.4-linux-amd64
+chmod +x mkcert && sudo mv mkcert /usr/local/bin/
+
+# macOS
+brew install mkcert
+
+# Windows
+choco install mkcert
+```
+
+### Certificate Setup
+```bash
+# Install mkcert CA (one-time setup)
+mkcert -install
+
+# Generate certificates for localhost (run from project root)
+mkdir -p frontend/certs
+cd frontend/certs
+mkcert -key-file localhost-key.pem -cert-file localhost.pem localhost 127.0.0.1 ::1
+```
+
+### Certificate Management
+```bash
+# Check certificate validity
+openssl x509 -in frontend/certs/localhost.pem -text -noout | grep -A 2 "Validity"
+
+# Renew certificates (remove old certificates first)
+rm frontend/certs/localhost*.pem
+cd frontend/certs
+mkcert -key-file localhost-key.pem -cert-file localhost.pem localhost 127.0.0.1 ::1
+cd ../..
+
+# Uninstall mkcert CA (if needed)
+mkcert -uninstall
+```
+
+## Starting Development Environment
+
+```bash
+# Start all services in development mode, using the dev environment file
 docker compose -f docker-compose.dev.yml --env-file .env.dev up --build -d
 
 # Frontend: http://localhost:4200

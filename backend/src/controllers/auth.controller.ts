@@ -35,7 +35,7 @@ export class AuthController {
       // Set HTTP-only cookie
       reply.setCookie('auth_token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'development',
         sameSite: 'strict',
         maxAge: 24 * 60 * 60, // 24 hours in seconds
         path: '/'
@@ -82,7 +82,7 @@ export class AuthController {
       // Set HTTP-only cookie
       reply.setCookie('auth_token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'development',
         sameSite: 'strict',
         maxAge: 24 * 60 * 60, // 24 hours in seconds
         path: '/'
@@ -112,7 +112,7 @@ export class AuthController {
       // Clear the authentication cookie
       reply.clearCookie('auth_token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'development',
         sameSite: 'strict',
         path: '/'
       });

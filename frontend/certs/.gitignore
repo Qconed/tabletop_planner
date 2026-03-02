@@ -1,0 +1,5 @@
+# SSL certificates - ignore all cert files for security
+*.pem
+*.key
+*.crt
+*.cert

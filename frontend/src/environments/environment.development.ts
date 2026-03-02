@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  baseApi: 'http://localhost:3000/api'
+  baseApi: 'http://localhost:3000/api'  // Direct connection - backend CORS allows HTTPS origin
 };

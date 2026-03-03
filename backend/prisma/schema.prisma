@@ -1,8 +1,10 @@
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native","linux-musl-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
   // what openSSL binaries to use by prisma to ensure secure comms with DB.
   // native: use the installed dependencies for the dev
+  // linux-musl-openssl-3.0.x: for alpine-based containers
+  // debian-openssl-3.0.x: for debian-based node:20-slim containers
 }
 
 datasource db {

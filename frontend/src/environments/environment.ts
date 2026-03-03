@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  baseApi: 'https://yourdomain.com/api'
+  baseApi: '/api' // nginx will proxy requests to the backend
 };

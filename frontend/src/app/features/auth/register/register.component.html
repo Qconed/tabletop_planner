@@ -1,0 +1,121 @@
+<div class="register-container">
+  <h2 class="register-title">Inscription</h2>
+  
+  @if (errorMessage()) {
+    <div class="error-message">{{ errorMessage() }}</div>
+  }
+  
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+    <div class="form-group">
+      <label for="username" class="form-label">Nom d'utilisateur</label>
+      <input 
+        type="text" 
+        id="username"
+        formControlName="username" 
+        class="form-input"
+        placeholder="Votre nom d'utilisateur"
+        [class.invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
+      />
+      @if (registerForm.get('username')?.invalid && registerForm.get('username')?.touched) {
+        <span class="form-error">
+          @if (registerForm.get('username')?.errors?.['required']) {
+            Le nom d'utilisateur est requis
+          }
+          @if (registerForm.get('username')?.errors?.['minlength']) {
+            Le nom doit contenir au moins 3 caractères
+          }
+          @if (registerForm.get('username')?.errors?.['maxlength']) {
+            Le nom ne peut pas dépasser 30 caractères
+          }
+        </span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="email" class="form-label">Email</label>
+      <input 
+        type="email" 
+        id="email"
+        formControlName="email" 
+        class="form-input"
+        placeholder="votre@email.com"
+        [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+      />
+      @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+        <span class="form-error">
+          @if (registerForm.get('email')?.errors?.['required']) {
+            L'email est requis
+          }
+          @if (registerForm.get('email')?.errors?.['email']) {
+            Veuillez entrer un email valide
+          }
+        </span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="password" class="form-label">Mot de passe</label>
+      <input 
+        type="password" 
+        id="password"
+        formControlName="password" 
+        class="form-input"
+        placeholder="••••••••"
+        [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+      />
+      @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+        <span class="form-error">
+          @if (registerForm.get('password')?.errors?.['required']) {
+            Le mot de passe est requis
+          }
+          @if (registerForm.get('password')?.errors?.['minlength']) {
+            Le mot de passe doit contenir au moins 8 caractères
+          }
+        </span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+      <input 
+        type="password" 
+        id="confirmPassword"
+        formControlName="confirmPassword" 
+        class="form-input"
+        placeholder="••••••••"
+        [class.invalid]="(registerForm.get('confirmPassword')?.invalid || registerForm.hasError('passwordMismatch')) && registerForm.get('confirmPassword')?.touched"
+      />
+      @if (registerForm.get('confirmPassword')?.touched) {
+        <span class="form-error">
+          @if (registerForm.get('confirmPassword')?.errors?.['required']) {
+            Veuillez confirmer votre mot de passe
+          }
+          @if (registerForm.hasError('passwordMismatch') && !registerForm.get('confirmPassword')?.errors?.['required']) {
+            Les mots de passe ne correspondent pas
+          }
+        </span>
+      }
+    </div>
+
+    <button 
+      type="submit" 
+      class="btn-submit"
+      [disabled]="registerForm.invalid || isLoading()"
+    >
+      @if (isLoading()) {
+        <span class="spinner"></span>
+        Inscription...
+      } @else {
+        S'inscrire
+      }
+    </button>
+  </form>
+  
+  <div class="switch-mode">
+    <p>Déjà un compte ? 
+      <button type="button" class="link-btn" (click)="switchToLogin.emit()">
+        Se connecter
+      </button>
+    </p>
+  </div>
+</div>

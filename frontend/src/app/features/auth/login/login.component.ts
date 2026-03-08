@@ -1,26 +1,13 @@
 import { Component, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CommonModule } from '@angular/common';
-import { AuthService} from '../../core/services/auth.service';
-import { LoginRequest } from '../../core/models/auth.model';
+import { AuthService} from '../../../core/services/auth.service';
+import { LoginRequest } from '../../../core/models/auth.model';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatInputModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatProgressSpinnerModule
-  ],
-  templateUrl: './login.component.html' ,
+  imports: [ReactiveFormsModule],
+  templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
@@ -28,12 +15,12 @@ export class LoginComponent {
   isLoading = signal(false);
   errorMessage = signal<string>('');
   
-  // Output event to switch to register mode
   switchToRegister = output<void>();
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -52,6 +39,7 @@ export class LoginComponent {
         next: (response) => {
           this.isLoading.set(false);
           console.log('Login successful:', response.message);
+          this.router.navigate(['/dashboard']);
         },
         error: (error) => {
           this.isLoading.set(false);

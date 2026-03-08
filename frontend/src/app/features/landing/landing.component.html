@@ -1,0 +1,19 @@
+<app-navbar (loginClick)="openLogin()" />
+
+<main>
+      <h1>Bienvenue sur TableTopPlanner</h1>
+</main>
+
+@if (showLogin() || showRegister()) {
+  <div class="overlay" (click)="closeOverlay()" escClosable (esc)="closeOverlay()"> <!-- close window when clicking outside-->
+    <div class="overlay-content" (click)="$event.stopPropagation()">   <!-- avoid closing window when clicking inside -->
+      <button class="close-btn" (click)="closeOverlay()">×</button>
+      @if (showLogin()) {
+        <app-login (switchToRegister)="openRegister()" />
+      }
+      @if (showRegister()) {
+        <app-register (switchToLogin)="openLogin()" />
+      }
+    </div>
+  </div>
+}

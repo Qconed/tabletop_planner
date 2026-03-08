@@ -12,6 +12,10 @@ datasource db {
   url      = env("DATABASE_URL") // made the choice to stay with prisma version of 5.22.0 to be able to use the URL syntax
 }
 
+// ========================================
+// Modèle d'authentification
+// ========================================
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -21,4 +25,184 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+// ========================================
+// Modèles métier - Gestion de festivals
+// ========================================
+
+/// Festival de jeux de société
+model Festival {
+  id              Int      @id @default(autoincrement()) @map("id_festival")
+  nom             String   @db.VarChar(255)
+  nbTotalTables   Int      @map("nb_total_tables")
+  date            DateTime @db.Date
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  reservations    Reservation[]
+  classesTarifaires ClasseTarifaire[]
+
+  @@map("festivals")
+}
+
+/// Éditeur ou distributeur de jeux
+model Editeur {
+  id              Int      @id @default(autoincrement()) @map("id_editeur")
+  libelle         String   @db.VarChar(255)
+  exposeJeux      Boolean  @default(false) @map("expose_jeux")
+  estDistributeur Boolean  @default(false) @map("est_distributeur")
+  logoEditeur     String?  @db.VarChar(500) @map("logo_editeur")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  jeux            Jeu[]
+  reservations    Reservation[]
+
+  @@map("editeurs")
+}
+
+/// Jeu de société
+model Jeu {
+  id              Int      @id @default(autoincrement()) @map("id_jeu")
+  idEditeur       Int      @map("id_editeur")
+  libelle         String   @db.VarChar(255)
+  auteur          String?  @db.VarChar(255)
+  nbMinJoueurs    Int?     @map("nb_min_joueurs")
+  nbMaxJoueurs    Int?     @map("nb_max_joueurs")
+  ageMinimum      Int?     @map("age_minimum")
+  duree           Int?     @map("duree") // en minutes
+  theme           String?  @db.VarChar(255)
+  description     String?  @db.Text
+  notice          String?  @db.VarChar(500)
+  imageJeu        String?  @db.VarChar(500) @map("image_jeu")
+  videoRegle      String?  @db.VarChar(500) @map("video_regle")
+  estPrototype    Boolean  @default(false) @map("est_prototype")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  editeur         Editeur  @relation(fields: [idEditeur], references: [id], onDelete: Cascade)
+  jeuxReservations JeuReservation[]
+
+  @@index([idEditeur])
+  @@map("jeux")
+}
+
+/// Statut de workflow d'une réservation
+enum StatutWorkflow {
+  PAS_DE_CONTACT       @map("pas_de_contact")
+  CONTACT_PRIS         @map("contact_pris")
+  DISCUSSION_EN_COURS  @map("discussion_en_cours")
+  SERA_ABSENT          @map("sera_absent")
+  CONSIDERE_ABSENT     @map("considere_absent")
+  PRESENT              @map("present")
+  FACTURE              @map("facture")
+  FACTURE_PAYEE        @map("facture_payee")
+
+  @@map("statut_workflow")
+}
+
+/// Réservation d'un éditeur pour un festival
+model Reservation {
+  id                Int             @id @default(autoincrement()) @map("id_reservation")
+  idEditeur         Int             @map("id_editeur")
+  idFestival        Int             @map("id_festival")
+  notesResa         String?         @db.Text @map("notes_resa")
+  viendraPresenter  Boolean         @default(false) @map("viendra_presenter")
+  nbTablesResa      Int             @map("nb_tables_resa")
+  statut            StatutWorkflow  @default(PAS_DE_CONTACT)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  editeur           Editeur         @relation(fields: [idEditeur], references: [id], onDelete: Cascade)
+  festival          Festival        @relation(fields: [idFestival], references: [id], onDelete: Cascade)
+  jeuxReservations  JeuReservation[]
+  reservationClasses ReservationClasse[]
+  placementsJeux    PlacementJeu[]
+
+  @@index([idEditeur])
+  @@index([idFestival])
+  @@map("reservations")
+}
+
+/// Table de liaison entre Réservation et Jeu (relation many-to-many)
+model JeuReservation {
+  idReservation   Int         @map("id_reservation")
+  idJeu           Int         @map("id_jeu")
+  quantite        Int         @default(1) // Nombre d'exemplaires du jeu
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  reservation     Reservation @relation(fields: [idReservation], references: [id], onDelete: Cascade)
+  jeu             Jeu         @relation(fields: [idJeu], references: [id], onDelete: Cascade)
+  placementsJeux  PlacementJeu[]
+
+  @@id([idReservation, idJeu])
+  @@index([idReservation])
+  @@index([idJeu])
+  @@map("jeux_reservations")
+}
+
+/// Classe tarifaire pour un festival (ex: petite table, grande table, etc.)
+model ClasseTarifaire {
+  id              Int      @id @default(autoincrement()) @map("id_classe_tarifaire")
+  idFestival      Int      @map("id_festival")
+  libelle         String   @db.VarChar(255)
+  prixTable       Int      @map("prix_table")
+  nbTotalTables   Int      @map("nb_total_tables")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  festival        Festival  @relation(fields: [idFestival], references: [id], onDelete: Cascade)
+  reservationClasses ReservationClasse[]
+  placementsJeux  PlacementJeu[]
+
+  @@index([idFestival])
+  @@map("classes_tarifaires")
+}
+
+/// Association entre une réservation et une classe tarifaire
+model ReservationClasse {
+  id                  Int             @id @default(autoincrement()) @map("id_reservation_classe")
+  idClasseTarifaire   Int             @map("id_classe_tarifaire")
+  idReservation       Int             @map("id_reservation")
+  nbTables            Int             @map("nb_tables")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  classeTarifaire     ClasseTarifaire @relation(fields: [idClasseTarifaire], references: [id], onDelete: Cascade)
+  reservation         Reservation     @relation(fields: [idReservation], references: [id], onDelete: Cascade)
+
+  @@index([idClasseTarifaire])
+  @@index([idReservation])
+  @@map("reservations_classes")
+}
+
+/// Placement d'un jeu sur des tables selon une classe tarifaire
+model PlacementJeu {
+  id                  Int             @id @default(autoincrement()) @map("id_placement_jeu")
+  idReservation       Int             @map("id_reservation")
+  idClasseTarifaire   Int             @map("id_classe_tarifaire")
+  idJeuReservation    String          @map("id_jeu_reservation") // Composite: "idReservation-idJeu"
+  idJeu               Int             @map("id_jeu")
+  nbTables            Int             @map("nb_tables")
+  quantiteJeu         Int             @map("quantite_jeu")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  reservation         Reservation     @relation(fields: [idReservation], references: [id], onDelete: Cascade)
+  classeTarifaire     ClasseTarifaire @relation(fields: [idClasseTarifaire], references: [id], onDelete: Cascade)
+  jeuReservation      JeuReservation  @relation(fields: [idReservation, idJeu], references: [idReservation, idJeu], onDelete: Cascade)
+
+  @@index([idReservation])
+  @@index([idClasseTarifaire])
+  @@index([idReservation, idJeu])
+  @@map("placements_jeux")
 }

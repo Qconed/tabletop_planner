@@ -1,0 +1,97 @@
+@startuml
+' configuration
+hide circle
+left to right direction
+
+entity "Festival" as F {
+    idFestival : int
+    ---
+    nom : String
+    nbTotalTable : int
+    date : Datet
+}
+
+entity "Editeur" as E {
+    idEditeur : int
+    ---
+    libelle : String
+    exposeJeux : Boolean
+    estDistributeur : Boolean
+    logoEditeur : String
+}
+
+entity "Jeu" as J {
+    idJeu : int
+    ---
+    #idEditeur : int
+    libelle : String
+}
+J --> "1,1" E : Edite par > 
+
+entity "Reservation" as R {
+    idReservation : int
+    #idEditeur : int
+    #idFestival : int
+    ---
+    notesResa : String
+    viendraPresenter : Boolean
+    nbTableResa : int
+}
+R --> "1,1" F : faite pour >
+R --> "1,1" E : faite par >
+
+entity "JeuReservation" as JR {
+    #idReservation : int
+    #idJeu : int
+    ---
+}
+JR -- R
+JR -- J
+
+entity "ClasseTarifaire" as CT {
+    idClasseTarifaire : int
+    ---
+    #idFestival : int
+    libelle : String
+    prixTable : int
+    nbTotTables : int
+}
+CT --> "1,1" F : existe dans >
+
+entity "ReservationClasse" as RC {
+    idReservationClasse : int
+    ---
+    #idClasseTarifaire : int
+    #idReservation : int
+    nbTotTables : int
+}
+RC -- "1,1" R : concerne >
+RC -- "1,1" CT : concerne >
+
+entity "PlacementJeu" as PJ {
+    idPlacementJeu : int
+    ---
+    #idReservation : int
+    #idClasseTarifaire : int
+    #idJeuReservation  : int
+    nbTables : int
+    quantiteJeu : int
+}
+PJ --> "1,1" CT : placé dans >
+PJ --> "1,1" R : fait depuis >
+PJ --> "1,1" JR : jeu concerné >
+
+enum "Worflow" as W {
+	---
+	PAS_DE_CONTACT,
+	CONTACT_PRIS,
+	DISCUSSION_EN_COURS,
+	SERA_ABSENT,
+	CONSIDERE_ABSENT,
+	PRESENT,
+	FACTURE,
+	FACTURE_PAYEE
+}
+R -- "1,1" W : statut >
+
+@enduml

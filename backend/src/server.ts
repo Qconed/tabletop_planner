@@ -22,6 +22,7 @@ async function buildFastify() {
   // Register routes
   await fastify.register(import('./routes/auth.routes.js'), { prefix: '/api/auth' });
 
+  await fastify.register(import('./routes/jeu.routes.js'), { prefix: '/api/jeux' });
   // Health check route
   fastify.get('/health', async (_request, _reply) => {
     return { 

@@ -19,7 +19,6 @@ interface EditeurCSV {
   idEditeur: string;
   libelleEditeur: string;
   exposant: string;
-  distributeur: string;
   logoEditeur: string;
 }
 
@@ -27,18 +26,9 @@ interface JeuCSV {
   idJeu: string;
   libelleJeu: string;
   auteurJeu: string;
-  nbMinJoueurJeu: string;
-  nbMaxJoueurJeu: string;
-  noticeJeu: string;
   idEditeur: string;
-  idTypeJeu: string;
-  agemini: string;
-  prototype: string;
-  duree: string;
-  theme: string;
   description: string;
   imageJeu: string;
-  videoRegle: string;
 }
 
 /**
@@ -158,14 +148,12 @@ async function migrateEditeurs(): Promise<void> {
         update: {
           libelle: editeur.libelleEditeur,
           exposeJeux: toBoolean(editeur.exposant),
-          estDistributeur: toBoolean(editeur.distributeur),
           logoEditeur: cleanUrl(editeur.logoEditeur),
         },
         create: {
           id,
           libelle: editeur.libelleEditeur,
           exposeJeux: toBoolean(editeur.exposant),
-          estDistributeur: toBoolean(editeur.distributeur),
           logoEditeur: cleanUrl(editeur.logoEditeur),
         },
       });
@@ -186,6 +174,7 @@ async function migrateJeux(): Promise<void> {
   console.log('🎲 Début de la migration des jeux...');
   
   const csvPath = path.join(__dirname, '../../prisma/data/jeu.csv');
+  // Keep all headers from CSV for parsing, but only use the ones we need
   const headers = [
     'idJeu', 'libelleJeu', 'auteurJeu', 'nbMinJoueurJeu', 'nbMaxJoueurJeu',
     'noticeJeu', 'idEditeur', 'idTypeJeu', 'agemini', 'prototype', 'duree',
@@ -225,32 +214,16 @@ async function migrateJeux(): Promise<void> {
           idEditeur,
           libelle: jeu.libelleJeu,
           auteur: jeu.auteurJeu || null,
-          nbMinJoueurs: toNumber(jeu.nbMinJoueurJeu),
-          nbMaxJoueurs: toNumber(jeu.nbMaxJoueurJeu),
-          ageMinimum: toNumber(jeu.agemini),
-          duree: toNumber(jeu.duree),
-          theme: jeu.theme || null,
           description: jeu.description || null,
-          notice: cleanUrl(jeu.noticeJeu),
           imageJeu: cleanUrl(jeu.imageJeu),
-          videoRegle: cleanUrl(jeu.videoRegle),
-          estPrototype: toBoolean(jeu.prototype),
         },
         create: {
           id,
           idEditeur,
           libelle: jeu.libelleJeu,
           auteur: jeu.auteurJeu || null,
-          nbMinJoueurs: toNumber(jeu.nbMinJoueurJeu),
-          nbMaxJoueurs: toNumber(jeu.nbMaxJoueurJeu),
-          ageMinimum: toNumber(jeu.agemini),
-          duree: toNumber(jeu.duree),
-          theme: jeu.theme || null,
           description: jeu.description || null,
-          notice: cleanUrl(jeu.noticeJeu),
           imageJeu: cleanUrl(jeu.imageJeu),
-          videoRegle: cleanUrl(jeu.videoRegle),
-          estPrototype: toBoolean(jeu.prototype),
         },
       });
       imported++;

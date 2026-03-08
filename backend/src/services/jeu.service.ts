@@ -11,17 +11,6 @@ export const jeuService = {
       where.idEditeur = query.idEditeur;
     }
 
-    if (query?.estPrototype !== undefined) {
-      where.estPrototype = query.estPrototype;
-    }
-
-    if (query?.theme) {
-      where.theme = {
-        contains: query.theme,
-        mode: 'insensitive',
-      };
-    }
-
     if (query?.search) {
       where.OR = [
         {

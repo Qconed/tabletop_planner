@@ -11,10 +11,6 @@ export const editeurService = {
       where.exposeJeux = query.exposeJeux;
     }
 
-    if (query?.estDistributeur !== undefined) {
-      where.estDistributeur = query.estDistributeur;
-    }
-
     if (query?.search) {
       where.libelle = {
         contains: query.search,

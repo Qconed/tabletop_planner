@@ -52,7 +52,6 @@ model Editeur {
   id              Int      @id @default(autoincrement()) @map("id_editeur")
   libelle         String   @db.VarChar(255)
   exposeJeux      Boolean  @default(false) @map("expose_jeux")
-  estDistributeur Boolean  @default(false) @map("est_distributeur")
   logoEditeur     String?  @db.VarChar(500) @map("logo_editeur")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -70,16 +69,8 @@ model Jeu {
   idEditeur       Int      @map("id_editeur")
   libelle         String   @db.VarChar(255)
   auteur          String?  @db.VarChar(255)
-  nbMinJoueurs    Int?     @map("nb_min_joueurs")
-  nbMaxJoueurs    Int?     @map("nb_max_joueurs")
-  ageMinimum      Int?     @map("age_minimum")
-  duree           Int?     @map("duree") // en minutes
-  theme           String?  @db.VarChar(255)
   description     String?  @db.Text
-  notice          String?  @db.VarChar(500)
   imageJeu        String?  @db.VarChar(500) @map("image_jeu")
-  videoRegle      String?  @db.VarChar(500) @map("video_regle")
-  estPrototype    Boolean  @default(false) @map("est_prototype")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -111,7 +102,6 @@ model Reservation {
   idEditeur         Int             @map("id_editeur")
   idFestival        Int             @map("id_festival")
   notesResa         String?         @db.Text @map("notes_resa")
-  viendraPresenter  Boolean         @default(false) @map("viendra_presenter")
   nbTablesResa      Int             @map("nb_tables_resa")
   statut            StatutWorkflow  @default(PAS_DE_CONTACT)
   createdAt         DateTime        @default(now()) @map("created_at")

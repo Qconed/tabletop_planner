@@ -19,7 +19,6 @@ export const createReservationSchema = z.object({
   idEditeur: z.number().int().positive(),
   idFestival: z.number().int().positive(),
   notesResa: z.string().optional(),
-  viendraPresenter: z.boolean().default(false),
   nbTablesResa: z.number().int().positive('Le nombre de tables doit être positif'),
   statut: statutWorkflowEnum.default('PAS_DE_CONTACT'),
 });

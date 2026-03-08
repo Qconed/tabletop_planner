@@ -10,7 +10,6 @@ export const editeurIdSchema = z.object({
 
 export const editeurQuerySchema = z.object({
   exposeJeux: z.enum(['true', 'false']).transform(val => val === 'true').optional(),
-  estDistributeur: z.enum(['true', 'false']).transform(val => val === 'true').optional(),
   search: z.string().optional(),
 }).optional();
 

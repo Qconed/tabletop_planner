@@ -10,8 +10,6 @@ export const jeuIdSchema = z.object({
 
 export const jeuQuerySchema = z.object({
   idEditeur: z.string().regex(/^\d+$/).transform(Number).optional(),
-  estPrototype: z.enum(['true', 'false']).transform(val => val === 'true').optional(),
-  theme: z.string().optional(),
   search: z.string().optional(),
 }).optional();
 

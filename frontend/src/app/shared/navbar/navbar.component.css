@@ -22,6 +22,39 @@
   margin: 0;
 }
 
+.navbar-logo {
+  color: var(--color-text-inverse);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.navbar-logo:hover {
+  opacity: 0.9;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.nav-link {
+  color: var(--color-text-inverse);
+  text-decoration: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  transition: background-color var(--transition-fast);
+}
+
+.nav-link:hover {
+  background-color: var(--color-primary-light);
+}
+
+.nav-link.active {
+  background-color: var(--color-secondary);
+}
+
 .btn-login {
   background-color: var(--color-secondary);
   color: var(--color-text-inverse);
@@ -39,4 +72,24 @@
 
 .btn-login:active {
   transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .navbar-links {
+    gap: var(--spacing-sm);
+  }
+
+  .nav-link {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.9rem;
+  }
+
+  .btn-login {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.9rem;
+  }
 }

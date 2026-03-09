@@ -1,0 +1,54 @@
+.festival-manager {
+  padding: var(--spacing-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) 0;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--spacing-xl);
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.content {
+  padding: var(--spacing-lg) 0;
+}
+
+.placeholder-text {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-2xl);
+  background-color: var(--color-background-alt);
+  border-radius: var(--radius-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .festival-manager {
+    padding: var(--spacing-md);
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: stretch;
+  }
+
+  .toolbar button {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+}

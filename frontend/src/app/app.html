@@ -1,1 +1,16 @@
+<app-navbar (loginClick)="onLoginClick()" />
 <router-outlet></router-outlet>
+
+@if (authModal.showLogin() || authModal.showRegister()) {
+  <div class="overlay" (click)="closeOverlay()" escClosable (esc)="closeOverlay()">
+    <div class="overlay-content" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="closeOverlay()">×</button>
+      @if (authModal.showLogin()) {
+        <app-login (switchToRegister)="openRegister()" />
+      }
+      @if (authModal.showRegister()) {
+        <app-register (switchToLogin)="onLoginClick()" />
+      }
+    </div>
+  </div>
+}

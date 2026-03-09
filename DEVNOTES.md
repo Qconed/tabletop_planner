@@ -3,9 +3,55 @@
 
 # Development Workflow
 
+## HTTPS Development Setup
+
+The development environment uses HTTPS with self-signed certificates. Follow these steps for initial setup:
+
+### Install mkcert
 ```bash
-# Start all services in development mode
-docker compose -f docker-compose.dev.yml up --build -d
+# Ubuntu/Debian
+sudo apt install libnss3-tools
+wget -O mkcert https://github.com/FiloSottile/mkcert/releases/latest/download/mkcert-v1.4.4-linux-amd64
+chmod +x mkcert && sudo mv mkcert /usr/local/bin/
+
+# macOS
+brew install mkcert
+
+# Windows
+choco install mkcert
+```
+
+### Certificate Setup
+```bash
+# Install mkcert CA (one-time setup)
+mkcert -install
+
+# Generate certificates for localhost (run from project root)
+mkdir -p frontend/certs
+cd frontend/certs
+mkcert -key-file localhost-key.pem -cert-file localhost.pem localhost 127.0.0.1 ::1
+```
+
+### Certificate Management
+```bash
+# Check certificate validity
+openssl x509 -in frontend/certs/localhost.pem -text -noout | grep -A 2 "Validity"
+
+# Renew certificates (remove old certificates first)
+rm frontend/certs/localhost*.pem
+cd frontend/certs
+mkcert -key-file localhost-key.pem -cert-file localhost.pem localhost 127.0.0.1 ::1
+cd ../..
+
+# Uninstall mkcert CA (if needed)
+mkcert -uninstall
+```
+
+## Starting Development Environment
+
+```bash
+# Start all services in development mode, using the dev environment file
+docker compose -f docker-compose.dev.yml --env-file .env.dev up --build -d
 
 # Frontend: http://localhost:4200
 # Backend: http://localhost:3000  
@@ -39,3 +85,35 @@ After pulling DB changes, restart the backend container with `docker compose -f 
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up --build
 ```
+
+
+### Making API Calls
+
+All services should use the `ApiConfigService` to construct API URLs:
+
+```typescript
+import { ApiConfigService } from './api-config.service';
+
+@Injectable({ providedIn: 'root' })
+export class MyService {
+  constructor(
+    private http: HttpClient,
+    private apiConfig: ApiConfigService
+  ) {}
+
+  getData(): Observable<any> {
+    // This will use BASE_API + '/data'
+    return this.http.get(this.apiConfig.getApiUrl('/data'));
+  }
+}
+```
+
+#### API Config Service Methods
+
+- `getApiUrl('/endpoint')`: Returns `BASE_API + '/endpoint'`
+- `getBaseApi()`: Returns the base API URL
+
+#### Development vs Production
+
+- **Development**: Run `ng serve` (default configuration uses development environment)
+- **Production**: Run `ng build --configuration production`

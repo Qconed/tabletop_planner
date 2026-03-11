@@ -7,6 +7,13 @@ export const festivalService = {
   async getAll() {
     return prisma.festival.findMany({
       orderBy: { date: 'desc' },
+      include: {
+        _count: {
+          select: {
+            classesTarifaires: true,
+          },
+        },
+      },
     });
   },
 

@@ -1,0 +1,42 @@
+<div class="festival-list">
+  @if (festivals().length > 0) {
+    <div class="festivals-grid">
+      @for (festival of festivals(); track festival.id) {
+        <mat-card class="festival-card">
+          <mat-card-header>
+            <mat-card-title>{{ festival.nom }}</mat-card-title>
+            <mat-card-subtitle class="festival-date">
+              <mat-icon class="date-icon">event</mat-icon>
+              <span>{{ festival.date | date: 'dd/MM/yyyy' }}</span>
+            </mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="festival-info">
+              <div class="info-item">
+                <mat-icon class="info-icon">table_restaurant</mat-icon>
+                <div class="info-details">
+                  <span class="info-value">{{ festival.nbTotalTables }}</span>
+                  <span class="info-label">tables disponibles</span>
+                </div>
+              </div>
+              
+              <div class="info-item">
+                <mat-icon class="info-icon">local_offer</mat-icon>
+                <div class="info-details">
+                  <span class="info-value">{{ festival._count?.classesTarifaires || 0 }}</span>
+                  <span class="info-label">classes tarifaires</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <div class="no-festivals">
+      <mat-icon class="no-festivals-icon">event_busy</mat-icon>
+      <p>Aucun festival enregistré</p>
+    </div>
+  }
+</div>

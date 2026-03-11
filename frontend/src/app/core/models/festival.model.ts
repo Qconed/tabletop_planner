@@ -5,6 +5,9 @@ export interface Festival {
   nbTotalTables: number;
   createdAt?: Date;
   updatedAt?: Date;
+  _count?: {
+    classesTarifaires: number;
+  };
 }
 
 export interface FestivalCreateDto {

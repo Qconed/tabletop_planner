@@ -11,16 +11,24 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { FestivalService } from '../../../core/services/festival.service';
 import { ClasseTarifaireService } from '../../../core/services/classe-tarifaire.service';
-import { Festival, FestivalCreateDto } from '../../../core/models/festival.model';
-import { forkJoin } from 'rxjs';
+import { Festival } from '../../../core/models/festival.model';
+import { Observable, forkJoin } from 'rxjs';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
-
-interface ClasseTarifaireForm {
-  id?: number;
-  libelle: string;
-  prixTable: number;
-  nbTotalTables: number;
-}
+import { ClasseTarifaireForm, FestivalFormValue } from './festival-form.types';
+import {
+  MIN_CLASSE_NAME_LENGTH,
+  MIN_FESTIVAL_NAME_LENGTH,
+  PERSISTED_CLASSE_REQUIRED_MESSAGE,
+  buildClasseTarifaireCreateDto,
+  buildClasseTarifaireUpdateDto,
+  buildFestivalCreateDto,
+  buildFestivalUpdateDto,
+  extractApiErrorMessage,
+  hasUniqueClasseNames,
+  mapClasseTarifaireToFormValue,
+  mapFestivalToFormValue,
+  validateClassesTarifairesBeforeSubmit
+} from './festival-form.utils';
 
 @Component({
   selector: 'app-festival-form',
@@ -63,13 +71,11 @@ export class FestivalFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    
+
     if (this.festivalId) {
-      // Load festival data if ID is provided
       this.viewMode.set(true);
       this.loadFestivalData(this.festivalId);
     } else {
-      // Creation mode - start in edit mode
       this.viewMode.set(false);
     }
   }
@@ -80,7 +86,6 @@ export class FestivalFormComponent implements OnInit {
         this.festival = festival;
         this.updateFormValues(festival);
         this.loadExistingClassesTarifaires(festival);
-        // Disable form initially in view mode
         if (this.viewMode()) {
           this.festivalForm.disable();
         }
@@ -93,22 +98,18 @@ export class FestivalFormComponent implements OnInit {
   }
 
   private updateFormValues(festival: Festival): void {
-    this.festivalForm.patchValue({
-      nom: festival.nom,
-      nombre_tables: festival.nbTotalTables,
-      date: new Date(festival.date)
-    });
+    this.festivalForm.patchValue(mapFestivalToFormValue(festival));
   }
 
   switchToEditMode(): void {
-    this.errorMessage.set('');
+    this.clearError();
     this.viewMode.set(false);
     this.festivalForm.enable();
   }
 
   private initForm(): void {
     this.festivalForm = this.fb.group({
-      nom: ['', [Validators.required, Validators.minLength(3)]],
+      nom: ['', [Validators.required, Validators.minLength(MIN_FESTIVAL_NAME_LENGTH)]],
       nombre_tables: [
         null,
         [Validators.required, Validators.min(1)]
@@ -122,17 +123,22 @@ export class FestivalFormComponent implements OnInit {
     return this.festivalForm.get('classesTarifaires') as FormArray;
   }
 
-  private createClasseTarifaireFormGroup(id?: number, libelle = '', prixTable: number | null = null, nbTotalTables: number | null = null): FormGroup {
+  private createClasseTarifaireFormGroup(
+    id?: number,
+    libelle = '',
+    prixTable: number | null = null,
+    nbTotalTables: number | null = null
+  ): FormGroup {
     return this.fb.group({
-      id: [id], // Store the ID if it exists (for updates)
-      libelle: [libelle, [Validators.required, Validators.minLength(2)]],
+      id: [id],
+      libelle: [libelle, [Validators.required, Validators.minLength(MIN_CLASSE_NAME_LENGTH)]],
       prixTable: [prixTable, [Validators.required, Validators.min(0)]],
       nbTotalTables: [nbTotalTables, [Validators.required, Validators.min(1)]]
     });
   }
 
   addClasseTarifaire(): void {
-    this.errorMessage.set('');
+    this.clearError();
     this.classesTarifaires.push(this.createClasseTarifaireFormGroup());
   }
 
@@ -141,11 +147,11 @@ export class FestivalFormComponent implements OnInit {
     const classeId = classeControl.get('id')?.value as number | null | undefined;
 
     if (this.isEditMode && classeId && !this.canRemovePersistedClasseTarifaire()) {
-      this.errorMessage.set('Un festival existant doit conserver au moins une classe tarifaire enregistrée.');
+      this.errorMessage.set(PERSISTED_CLASSE_REQUIRED_MESSAGE);
       return;
     }
 
-    this.errorMessage.set('');
+    this.clearError();
 
     if (this.isEditMode && classeId) {
       this.removedClasseTarifaireIds.add(classeId);
@@ -162,12 +168,13 @@ export class FestivalFormComponent implements OnInit {
     this.initialPersistedClassesTarifairesCount = classesTarifaires.filter((classe) => !!classe.id).length;
 
     classesTarifaires.forEach((classe) => {
+      const classeFormValue = mapClasseTarifaireToFormValue(classe);
       this.classesTarifaires.push(
         this.createClasseTarifaireFormGroup(
-          classe.id,
-          classe.libelle,
-          classe.prixTable / 100,
-          classe.nbTotalTables
+          classeFormValue.id,
+          classeFormValue.libelle,
+          classeFormValue.prixTable,
+          classeFormValue.nbTotalTables
         )
       );
     });
@@ -179,31 +186,6 @@ export class FestivalFormComponent implements OnInit {
 
   private get persistedClasseTarifairesCount(): number {
     return this.classesTarifaires.controls.filter((classe) => !!classe.get('id')?.value).length;
-  }
-
-  // Validation personnalisée pour vérifier les noms uniques
-  private validateUniqueNames(): boolean {
-    const names = this.classesTarifaires.value.map((ct: ClasseTarifaireForm) => ct.libelle.trim().toLowerCase());
-    const uniqueNames = new Set(names);
-    return names.length === uniqueNames.size;
-  }
-
-  private validateClassesTarifairesOnSubmit(): boolean {
-    if (this.classesTarifaires.length === 0) {
-      this.errorMessage.set('Au moins une classe tarifaire est requise.');
-      return false;
-    }
-
-    if (
-      this.isEditMode
-      && this.initialPersistedClassesTarifairesCount > 0
-      && this.persistedClasseTarifairesCount === 0
-    ) {
-      this.errorMessage.set('Un festival existant doit conserver au moins une classe tarifaire enregistrée.');
-      return false;
-    }
-
-    return true;
   }
 
   confirmDeleteFestival(): void {
@@ -235,139 +217,110 @@ export class FestivalFormComponent implements OnInit {
       return;
     }
 
-    this.isSubmitting = true;
-    this.errorMessage.set('');
+    this.startSubmitting();
 
     this.festivalService.delete(this.festivalId).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.stopSubmitting();
         this.festivalDeleted.emit();
       },
       error: (err) => {
         console.error('❌ Erreur lors de la suppression du festival:', err);
-        this.isSubmitting = false;
-        const errorMsg = err.error?.error || err.error?.message || err.message;
-        this.errorMessage.set('Erreur lors de la suppression du festival: ' + errorMsg);
+        this.stopSubmitting();
+        this.errorMessage.set('Erreur lors de la suppression du festival: ' + extractApiErrorMessage(err));
       }
     });
   }
 
   onSubmit(): void {
-    if (this.festivalForm.invalid) {
-      this.festivalForm.markAllAsTouched();
+    if (!this.canSubmitForm()) {
       return;
     }
 
-    if (!this.validateClassesTarifairesOnSubmit()) {
-      this.festivalForm.markAllAsTouched();
+    this.startSubmitting();
+    const formValue = this.getFormValue();
+
+    if (this.isEditMode && this.festivalId) {
+      this.submitFestivalUpdate(this.festivalId, formValue);
       return;
     }
 
-    if (!this.validateUniqueNames()) {
-      this.errorMessage.set('Les noms des classes tarifaires doivent être uniques.');
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.errorMessage.set('');
-
-    const formValue = this.festivalForm.value;
-    
-    // Conversion de la date en ISO string
-    const dateValue = formValue.date instanceof Date ? formValue.date.toISOString() : formValue.date;
-    
-    if (this.festivalId) {
-      const festivalDto = {
-        nom: formValue.nom,
-        nbTotalTables: formValue.nombre_tables,
-        date: dateValue
-      };
-
-      console.log('📤 Envoi des données du festival:', festivalDto);
-
-      // Mode édition - mise à jour du festival
-      this.festivalService.update(this.festivalId, festivalDto).subscribe({
-        next: (updatedFestival) => {
-          console.log('✅ Festival mis à jour avec succès:', updatedFestival);
-          this.handleClassesTarifaires(updatedFestival.id);
-        },
-        error: (err) => {
-          console.error('❌ Erreur lors de la mise à jour du festival:', err);
-          this.isSubmitting = false;
-          this.errorMessage.set('Erreur lors de la mise à jour du festival: ' + (err.error?.message || err.message));
-        }
-      });
-    } else {
-      const festivalDto: FestivalCreateDto = {
-        nom: formValue.nom,
-        nbTotalTables: formValue.nombre_tables,
-        date: dateValue,
-        classesTarifaires: this.classesTarifaires.value.map((classe: ClasseTarifaireForm) => ({
-          libelle: classe.libelle,
-          prixTable: Math.round(classe.prixTable * 100),
-          nbTotalTables: classe.nbTotalTables
-        }))
-      };
-
-      console.log('📤 Envoi du festival et des classes tarifaires:', festivalDto);
-
-      // Mode création
-      this.festivalService.create(festivalDto).subscribe({
-        next: (createdFestival) => {
-          console.log('✅ Festival et classes tarifaires créés avec succès:', createdFestival);
-          this.isSubmitting = false;
-          this.formSubmitted.emit();
-        },
-        error: (err) => {
-          console.error('❌ Erreur lors de la création du festival:', err);
-          console.error('📋 Détails de l\'erreur:', err.error);
-          this.isSubmitting = false;
-          const errorMsg = err.error?.error || err.error?.message || err.message;
-          const details = err.error?.details ? '\nDétails: ' + JSON.stringify(err.error.details) : '';
-          this.errorMessage.set('Erreur lors de la création du festival: ' + errorMsg + details);
-        }
-      });
-    }
+    this.submitFestivalCreate(formValue);
   }
 
-  private handleClassesTarifaires(festivalId: number): void {
-    console.log('📤 Gestion des classes tarifaires pour le festival', festivalId);
+  private canSubmitForm(): boolean {
+    if (this.festivalForm.invalid) {
+      this.festivalForm.markAllAsTouched();
+      return false;
+    }
 
-    const deletedClassesRequests = Array.from(this.removedClasseTarifaireIds).map((classeId) => {
-      console.log('📤 Suppression classe tarifaire:', classeId);
-      return this.classeTarifaireService.delete(classeId);
+    const classesError = validateClassesTarifairesBeforeSubmit({
+      classesCount: this.classesTarifaires.length,
+      isEditMode: this.isEditMode,
+      initialPersistedCount: this.initialPersistedClassesTarifairesCount,
+      persistedCount: this.persistedClasseTarifairesCount
     });
 
-    const classesTarifairesRequests = this.classesTarifaires.value.map(
-      (classe: ClasseTarifaireForm) => {
-        const prixEnCentimes = Math.round(classe.prixTable * 100); // Convertir en centimes
-        
-        if (classe.id) {
-          // Update existing classe tarifaire
-          console.log('📤 Mise à jour classe tarifaire:', classe.id);
-          return this.classeTarifaireService.update(classe.id, {
-            libelle: classe.libelle,
-            prixTable: prixEnCentimes,
-            nbTotalTables: classe.nbTotalTables
-          });
-        } else {
-          // Create new classe tarifaire
-          const dto = {
-            idFestival: festivalId,
-            libelle: classe.libelle,
-            prixTable: prixEnCentimes,
-            nbTotalTables: classe.nbTotalTables
-          };
-          console.log('📤 Création classe tarifaire:', dto);
-          return this.classeTarifaireService.create(dto);
-        }
-      }
-    );
+    if (classesError) {
+      this.errorMessage.set(classesError);
+      this.festivalForm.markAllAsTouched();
+      return false;
+    }
 
-    const requests = [...deletedClassesRequests, ...classesTarifairesRequests];
+    if (!hasUniqueClasseNames(this.classesTarifaires.value as ClasseTarifaireForm[])) {
+      this.errorMessage.set('Les noms des classes tarifaires doivent être uniques.');
+      return false;
+    }
+
+    return true;
+  }
+
+  private submitFestivalUpdate(festivalId: number, formValue: FestivalFormValue): void {
+    const festivalDto = buildFestivalUpdateDto(formValue);
+
+    console.log('📤 Envoi des données du festival:', festivalDto);
+
+    this.festivalService.update(festivalId, festivalDto).subscribe({
+      next: (updatedFestival) => {
+        console.log('✅ Festival mis à jour avec succès:', updatedFestival);
+        this.syncClassesTarifaires(updatedFestival.id);
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors de la mise à jour du festival:', err);
+        this.stopSubmitting();
+        this.errorMessage.set('Erreur lors de la mise à jour du festival: ' + extractApiErrorMessage(err));
+      }
+    });
+  }
+
+  private submitFestivalCreate(formValue: FestivalFormValue): void {
+    const festivalDto = buildFestivalCreateDto(formValue);
+
+    console.log('📤 Envoi du festival et des classes tarifaires:', festivalDto);
+
+    this.festivalService.create(festivalDto).subscribe({
+      next: (createdFestival) => {
+        console.log('✅ Festival et classes tarifaires créés avec succès:', createdFestival);
+        this.stopSubmitting();
+        this.formSubmitted.emit();
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors de la création du festival:', err);
+        console.error('📋 Détails de l\'erreur:', err.error);
+        this.stopSubmitting();
+        const details = err.error?.details ? '\nDétails: ' + JSON.stringify(err.error.details) : '';
+        this.errorMessage.set('Erreur lors de la création du festival: ' + extractApiErrorMessage(err) + details);
+      }
+    });
+  }
+
+  private syncClassesTarifaires(festivalId: number): void {
+    console.log('📤 Gestion des classes tarifaires pour le festival', festivalId);
+
+    const requests = this.buildClasseTarifaireSyncRequests(festivalId);
 
     if (requests.length === 0) {
-      this.isSubmitting = false;
+      this.stopSubmitting();
       this.formSubmitted.emit();
       return;
     }
@@ -376,16 +329,59 @@ export class FestivalFormComponent implements OnInit {
       next: (results) => {
         console.log('✅ Toutes les classes tarifaires ont été traitées:', results);
         this.removedClasseTarifaireIds.clear();
-        this.isSubmitting = false;
+        this.stopSubmitting();
         this.formSubmitted.emit();
       },
       error: (err) => {
         console.error('❌ Erreur lors de la gestion des classes tarifaires:', err);
-        this.isSubmitting = false;
-        const errorMsg = err.error?.error || err.error?.message || err.message;
-        this.errorMessage.set('Erreur lors de la gestion des classes tarifaires: ' + errorMsg);
+        this.stopSubmitting();
+        this.errorMessage.set('Erreur lors de la gestion des classes tarifaires: ' + extractApiErrorMessage(err));
       }
     });
+  }
+
+  private buildClasseTarifaireSyncRequests(festivalId: number): Observable<unknown>[] {
+    return [
+      ...this.buildClasseTarifaireDeleteRequests(),
+      ...this.buildClasseTarifaireUpsertRequests(festivalId)
+    ];
+  }
+
+  private buildClasseTarifaireDeleteRequests(): Observable<unknown>[] {
+    return Array.from(this.removedClasseTarifaireIds).map((classeId) => {
+      console.log('📤 Suppression classe tarifaire:', classeId);
+      return this.classeTarifaireService.delete(classeId);
+    });
+  }
+
+  private buildClasseTarifaireUpsertRequests(festivalId: number): Observable<unknown>[] {
+    return this.classesTarifaires.value.map((classe: ClasseTarifaireForm) => {
+      if (classe.id) {
+        console.log('📤 Mise à jour classe tarifaire:', classe.id);
+        return this.classeTarifaireService.update(classe.id, buildClasseTarifaireUpdateDto(classe));
+      }
+
+      const dto = buildClasseTarifaireCreateDto(festivalId, classe);
+      console.log('📤 Création classe tarifaire:', dto);
+      return this.classeTarifaireService.create(dto);
+    });
+  }
+
+  private getFormValue(): FestivalFormValue {
+    return this.festivalForm.value as FestivalFormValue;
+  }
+
+  private startSubmitting(): void {
+    this.isSubmitting = true;
+    this.clearError();
+  }
+
+  private stopSubmitting(): void {
+    this.isSubmitting = false;
+  }
+
+  private clearError(): void {
+    this.errorMessage.set('');
   }
 
   onCancel(): void {
@@ -410,11 +406,10 @@ export class FestivalFormComponent implements OnInit {
     return this.viewMode();
   }
 
-  // Getters pour les messages d'erreur
   get nomError(): string {
     const control = this.festivalForm.get('nom');
     if (control?.hasError('required')) return 'Le nom est requis';
-    if (control?.hasError('minlength')) return 'Le nom doit contenir au moins 3 caractères';
+    if (control?.hasError('minlength')) return `Le nom doit contenir au moins ${MIN_FESTIVAL_NAME_LENGTH} caractères`;
     return '';
   }
 
@@ -435,7 +430,7 @@ export class FestivalFormComponent implements OnInit {
   getClasseTarifaireLibelleError(index: number): string {
     const control = this.classesTarifaires.at(index).get('libelle');
     if (control?.hasError('required')) return 'Le nom est requis';
-    if (control?.hasError('minlength')) return 'Le nom doit contenir au moins 2 caractères';
+    if (control?.hasError('minlength')) return `Le nom doit contenir au moins ${MIN_CLASSE_NAME_LENGTH} caractères`;
     return '';
   }
 

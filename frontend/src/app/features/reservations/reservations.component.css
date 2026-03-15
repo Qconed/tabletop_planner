@@ -1,0 +1,41 @@
+.reservations-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+.page-header p {
+  margin: var(--spacing-sm) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.search-field {
+  width: min(100%, 560px);
+}
+
+.selection-preview {
+  width: min(100%, 560px);
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 24%, white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.selection-preview h3 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+}
+
+.selection-preview p {
+  margin: 0;
+}
+
+.selection-preview p + p {
+  margin-top: var(--spacing-xs);
+}

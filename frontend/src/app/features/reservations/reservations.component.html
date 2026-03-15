@@ -1,0 +1,48 @@
+<section class="reservations-page">
+  <header class="page-header">
+    <h2>Reservations</h2>
+    <p>Recherchez rapidement un editeur via autocomplete.</p>
+  </header>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Rechercher un editeur</mat-label>
+    <input
+      matInput
+      type="text"
+      #autoTrigger="matAutocompleteTrigger"
+      [value]="searchTerm()"
+      [matAutocomplete]="editeurAutocomplete"
+      appDebouncedInput
+      [debounceTime]="350"
+      (focus)="onInputFocus(autoTrigger)"
+      (debouncedValueChange)="onDebouncedSearch($event)" />
+
+    @if (isLoading()) {
+      <mat-spinner matSuffix diameter="18"></mat-spinner>
+    }
+
+    <mat-autocomplete
+      #editeurAutocomplete="matAutocomplete"
+      autoActiveFirstOption
+      (optionSelected)="onOptionSelected($event.option.value)">
+      @if (editeurs().length > 0) {
+        @for (editeur of editeurs(); track editeur.id) {
+          <mat-option [value]="editeur.libelle">
+            {{ editeur.libelle }}
+          </mat-option>
+        }
+      }
+      @if (!isLoading() && hasSearchValue() && editeurs().length === 0) {
+        <mat-option disabled>Aucun editeur trouve</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+
+  @if (selectedEditeur(); as editeur) {
+    <section class="selection-preview">
+      <h3>Editeur selectionne</h3>
+      <p><strong>{{ editeur.libelle }}</strong></p>
+      <p>Expose des jeux: {{ editeur.exposeJeux ? 'Oui' : 'Non' }}</p>
+    </section>
+  }
+</section>

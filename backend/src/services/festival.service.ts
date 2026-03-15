@@ -38,12 +38,29 @@ export const festivalService = {
   },
 
   async create(data: CreateFestivalInput) {
-    return prisma.festival.create({
-      data: {
-        nom: data.nom,
-        nbTotalTables: data.nbTotalTables,
-        date: new Date(data.date),
-      },
+    return prisma.$transaction(async (tx) => {
+      return tx.festival.create({
+        data: {
+          nom: data.nom,
+          nbTotalTables: data.nbTotalTables,
+          date: new Date(data.date),
+          classesTarifaires: {
+            create: data.classesTarifaires.map((classeTarifaire) => ({
+              libelle: classeTarifaire.libelle,
+              prixTable: classeTarifaire.prixTable,
+              nbTotalTables: classeTarifaire.nbTotalTables,
+            })),
+          },
+        },
+        include: {
+          classesTarifaires: true,
+          _count: {
+            select: {
+              classesTarifaires: true,
+            },
+          },
+        },
+      });
     });
   },
 

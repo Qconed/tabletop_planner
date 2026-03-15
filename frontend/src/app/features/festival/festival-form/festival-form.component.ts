@@ -11,7 +11,6 @@ import { MatCardModule } from '@angular/material/card';
 import { FestivalService } from '../../../core/services/festival.service';
 import { ClasseTarifaireService } from '../../../core/services/classe-tarifaire.service';
 import { Festival, FestivalCreateDto } from '../../../core/models/festival.model';
-import { ClasseTarifaire, ClasseTarifaireCreateDto } from '../../../core/models/classe-tarifaire.model';
 import { forkJoin } from 'rxjs';
 
 interface ClasseTarifaireForm {
@@ -74,7 +73,7 @@ export class FestivalFormComponent implements OnInit {
       next: (festival) => {
         this.festival = festival;
         this.updateFormValues(festival);
-        this.loadExistingClassesTarifaires(id);
+        this.loadExistingClassesTarifaires(festival);
         // Disable form initially in view mode
         if (this.viewMode()) {
           this.festivalForm.disable();
@@ -133,23 +132,20 @@ export class FestivalFormComponent implements OnInit {
     this.classesTarifaires.removeAt(index);
   }
 
-  private loadExistingClassesTarifaires(festivalId: number): void {
-    this.classeTarifaireService.getByFestival(festivalId).subscribe({
-      next: (classes) => {
-        classes.forEach(classe => {
-          this.classesTarifaires.push(
-            this.createClasseTarifaireFormGroup(
-              classe.id,
-              classe.libelle,
-              classe.prixTable / 100, // Convert from centimes to euros
-              classe.nbTotalTables
-            )
-          );
-        });
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des classes tarifaires:', err);
-      }
+  private loadExistingClassesTarifaires(festival: Festival): void {
+    this.classesTarifaires.clear();
+
+    const classesTarifaires = festival.classesTarifaires ?? [];
+
+    classesTarifaires.forEach((classe) => {
+      this.classesTarifaires.push(
+        this.createClasseTarifaireFormGroup(
+          classe.id,
+          classe.libelle,
+          classe.prixTable / 100,
+          classe.nbTotalTables
+        )
+      );
     });
   }
 
@@ -179,15 +175,15 @@ export class FestivalFormComponent implements OnInit {
     // Conversion de la date en ISO string
     const dateValue = formValue.date instanceof Date ? formValue.date.toISOString() : formValue.date;
     
-    const festivalDto: FestivalCreateDto = {
-      nom: formValue.nom,
-      nbTotalTables: formValue.nombre_tables,
-      date: dateValue
-    };
-    
-    console.log('📤 Envoi des données du festival:', festivalDto);
-
     if (this.festivalId) {
+      const festivalDto = {
+        nom: formValue.nom,
+        nbTotalTables: formValue.nombre_tables,
+        date: dateValue
+      };
+
+      console.log('📤 Envoi des données du festival:', festivalDto);
+
       // Mode édition - mise à jour du festival
       this.festivalService.update(this.festivalId, festivalDto).subscribe({
         next: (updatedFestival) => {
@@ -201,11 +197,25 @@ export class FestivalFormComponent implements OnInit {
         }
       });
     } else {
+      const festivalDto: FestivalCreateDto = {
+        nom: formValue.nom,
+        nbTotalTables: formValue.nombre_tables,
+        date: dateValue,
+        classesTarifaires: this.classesTarifaires.value.map((classe: ClasseTarifaireForm) => ({
+          libelle: classe.libelle,
+          prixTable: Math.round(classe.prixTable * 100),
+          nbTotalTables: classe.nbTotalTables
+        }))
+      };
+
+      console.log('📤 Envoi du festival et des classes tarifaires:', festivalDto);
+
       // Mode création
       this.festivalService.create(festivalDto).subscribe({
         next: (createdFestival) => {
-          console.log('✅ Festival créé avec succès:', createdFestival);
-          this.handleClassesTarifaires(createdFestival.id);
+          console.log('✅ Festival et classes tarifaires créés avec succès:', createdFestival);
+          this.isSubmitting = false;
+          this.formSubmitted.emit();
         },
         error: (err) => {
           console.error('❌ Erreur lors de la création du festival:', err);
@@ -236,7 +246,7 @@ export class FestivalFormComponent implements OnInit {
           });
         } else {
           // Create new classe tarifaire
-          const dto: ClasseTarifaireCreateDto = {
+          const dto = {
             idFestival: festivalId,
             libelle: classe.libelle,
             prixTable: prixEnCentimes,

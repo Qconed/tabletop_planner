@@ -66,4 +66,26 @@ export class FestivalManagerComponent implements OnInit {
       dialogRef.close();
     });
   }
+
+  openFestivalDetailsDialog(festivalId: number): void {
+    const dialogRef = this.dialog.open(FestivalFormComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      disableClose: false
+    });
+
+    // Pass the festival ID to the component
+    dialogRef.componentInstance.festivalId = festivalId;
+
+    dialogRef.componentInstance.formSubmitted.subscribe(() => {
+      dialogRef.close();
+      this.loadFestivals();
+      console.log('Festival mis à jour avec succès');
+    });
+
+    dialogRef.componentInstance.formCancelled.subscribe(() => {
+      dialogRef.close();
+    });
+  }
 }

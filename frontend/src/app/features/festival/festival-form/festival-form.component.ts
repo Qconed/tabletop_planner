@@ -11,10 +11,11 @@ import { MatCardModule } from '@angular/material/card';
 import { FestivalService } from '../../../core/services/festival.service';
 import { ClasseTarifaireService } from '../../../core/services/classe-tarifaire.service';
 import { Festival, FestivalCreateDto } from '../../../core/models/festival.model';
-import { ClasseTarifaireCreateDto } from '../../../core/models/classe-tarifaire.model';
+import { ClasseTarifaire, ClasseTarifaireCreateDto } from '../../../core/models/classe-tarifaire.model';
 import { forkJoin } from 'rxjs';
 
 interface ClasseTarifaireForm {
+  id?: number;
   libelle: string;
   prixTable: number;
   nbTotalTables: number;
@@ -38,12 +39,13 @@ interface ClasseTarifaireForm {
   styleUrls: ['./festival-form.component.css']
 })
 export class FestivalFormComponent implements OnInit {
-  @Input() festival?: Festival;
+  @Input() festivalId?: number | null;
   @Output() formSubmitted = new EventEmitter<void>();
   @Output() formCancelled = new EventEmitter<void>();
 
   festivalForm!: FormGroup;
-  isEditMode = false;
+  festival?: Festival;
+  viewMode = signal(true); // Start in view mode when festivalId is provided
   isSubmitting = false;
   errorMessage = signal<string>('');
   minDate = new Date();
@@ -55,33 +57,68 @@ export class FestivalFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isEditMode = !!this.festival;
     this.initForm();
+    
+    if (this.festivalId) {
+      // Load festival data if ID is provided
+      this.viewMode.set(true);
+      this.loadFestivalData(this.festivalId);
+    } else {
+      // Creation mode - start in edit mode
+      this.viewMode.set(false);
+    }
+  }
+
+  private loadFestivalData(id: number): void {
+    this.festivalService.getById(id).subscribe({
+      next: (festival) => {
+        this.festival = festival;
+        this.updateFormValues(festival);
+        this.loadExistingClassesTarifaires(id);
+        // Disable form initially in view mode
+        if (this.viewMode()) {
+          this.festivalForm.disable();
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement du festival:', err);
+        this.errorMessage.set('Erreur lors du chargement du festival');
+      }
+    });
+  }
+
+  private updateFormValues(festival: Festival): void {
+    this.festivalForm.patchValue({
+      nom: festival.nom,
+      nombre_tables: festival.nbTotalTables,
+      date: new Date(festival.date)
+    });
+  }
+
+  switchToEditMode(): void {
+    this.viewMode.set(false);
+    this.festivalForm.enable();
   }
 
   private initForm(): void {
     this.festivalForm = this.fb.group({
-      nom: [this.festival?.nom || '', [Validators.required, Validators.minLength(3)]],
+      nom: ['', [Validators.required, Validators.minLength(3)]],
       nombre_tables: [
-        this.festival?.nbTotalTables || null,
-        [Validators.required, Validators.min(1), Validators.max(1000)]
+        null,
+        [Validators.required, Validators.min(1)]
       ],
-      date: [this.festival?.date ? new Date(this.festival.date) : null, [Validators.required]],
+      date: [null, [Validators.required]],
       classesTarifaires: this.fb.array([], [Validators.required, Validators.minLength(1)])
     });
-
-    // Si mode édition, charger les classes tarifaires existantes
-    if (this.isEditMode && this.festival) {
-      this.loadExistingClassesTarifaires(this.festival.id);
-    }
   }
 
   get classesTarifaires(): FormArray {
     return this.festivalForm.get('classesTarifaires') as FormArray;
   }
 
-  private createClasseTarifaireFormGroup(libelle = '', prixTable: number | null = null, nbTotalTables: number | null = null): FormGroup {
+  private createClasseTarifaireFormGroup(id?: number, libelle = '', prixTable: number | null = null, nbTotalTables: number | null = null): FormGroup {
     return this.fb.group({
+      id: [id], // Store the ID if it exists (for updates)
       libelle: [libelle, [Validators.required, Validators.minLength(2)]],
       prixTable: [prixTable, [Validators.required, Validators.min(0)]],
       nbTotalTables: [nbTotalTables, [Validators.required, Validators.min(1)]]
@@ -101,7 +138,12 @@ export class FestivalFormComponent implements OnInit {
       next: (classes) => {
         classes.forEach(classe => {
           this.classesTarifaires.push(
-            this.createClasseTarifaireFormGroup(classe.libelle, classe.prixTable, classe.nbTotalTables)
+            this.createClasseTarifaireFormGroup(
+              classe.id,
+              classe.libelle,
+              classe.prixTable / 100, // Convert from centimes to euros
+              classe.nbTotalTables
+            )
           );
         });
       },
@@ -145,13 +187,15 @@ export class FestivalFormComponent implements OnInit {
     
     console.log('📤 Envoi des données du festival:', festivalDto);
 
-    if (this.isEditMode && this.festival) {
+    if (this.festivalId) {
       // Mode édition - mise à jour du festival
-      this.festivalService.update(this.festival.id, festivalDto).subscribe({
+      this.festivalService.update(this.festivalId, festivalDto).subscribe({
         next: (updatedFestival) => {
+          console.log('✅ Festival mis à jour avec succès:', updatedFestival);
           this.handleClassesTarifaires(updatedFestival.id);
         },
         error: (err) => {
+          console.error('❌ Erreur lors de la mise à jour du festival:', err);
           this.isSubmitting = false;
           this.errorMessage.set('Erreur lors de la mise à jour du festival: ' + (err.error?.message || err.message));
         }
@@ -176,38 +220,59 @@ export class FestivalFormComponent implements OnInit {
   }
 
   private handleClassesTarifaires(festivalId: number): void {
-    console.log('📤 Création des classes tarifaires pour le festival', festivalId);
+    console.log('📤 Gestion des classes tarifaires pour le festival', festivalId);
     
     const classesTarifairesRequests = this.classesTarifaires.value.map(
       (classe: ClasseTarifaireForm) => {
-        const dto: ClasseTarifaireCreateDto = {
-          idFestival: festivalId,
-          libelle: classe.libelle,
-          prixTable: Math.round(classe.prixTable * 100), // Convertir en centimes
-          nbTotalTables: classe.nbTotalTables
-        };
-        console.log('📤 Envoi classe tarifaire:', dto);
-        return this.classeTarifaireService.create(dto);
+        const prixEnCentimes = Math.round(classe.prixTable * 100); // Convertir en centimes
+        
+        if (classe.id) {
+          // Update existing classe tarifaire
+          console.log('📤 Mise à jour classe tarifaire:', classe.id);
+          return this.classeTarifaireService.update(classe.id, {
+            libelle: classe.libelle,
+            prixTable: prixEnCentimes,
+            nbTotalTables: classe.nbTotalTables
+          });
+        } else {
+          // Create new classe tarifaire
+          const dto: ClasseTarifaireCreateDto = {
+            idFestival: festivalId,
+            libelle: classe.libelle,
+            prixTable: prixEnCentimes,
+            nbTotalTables: classe.nbTotalTables
+          };
+          console.log('📤 Création classe tarifaire:', dto);
+          return this.classeTarifaireService.create(dto);
+        }
       }
     );
 
     forkJoin(classesTarifairesRequests).subscribe({
       next: (results) => {
-        console.log('✅ Toutes les classes tarifaires ont été créées:', results);
+        console.log('✅ Toutes les classes tarifaires ont été traitées:', results);
         this.isSubmitting = false;
         this.formSubmitted.emit();
       },
       error: (err) => {
-        console.error('❌ Erreur lors de la création des classes tarifaires:', err);
+        console.error('❌ Erreur lors de la gestion des classes tarifaires:', err);
         this.isSubmitting = false;
         const errorMsg = err.error?.error || err.error?.message || err.message;
-        this.errorMessage.set('Erreur lors de la création des classes tarifaires: ' + errorMsg);
+        this.errorMessage.set('Erreur lors de la gestion des classes tarifaires: ' + errorMsg);
       }
     });
   }
 
   onCancel(): void {
     this.formCancelled.emit();
+  }
+
+  get isEditMode(): boolean {
+    return !!this.festivalId;
+  }
+
+  get isViewMode(): boolean {
+    return this.viewMode();
   }
 
   // Getters pour les messages d'erreur

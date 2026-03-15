@@ -5,6 +5,16 @@
   border: 1px solid var(--color-border);
 }
 
+mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-button {
+  margin-left: auto;
+}
+
 .festival-form {
   display: flex;
   flex-direction: column;
@@ -61,6 +71,10 @@
   grid-template-columns: 2fr 1fr 1fr auto;
   gap: var(--spacing-md);
   align-items: start;
+}
+
+.classe-fields.view-mode {
+  grid-template-columns: 2fr 1fr 1fr;
 }
 
 .classe-libelle,

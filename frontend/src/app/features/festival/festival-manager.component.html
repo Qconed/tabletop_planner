@@ -8,6 +8,9 @@
   </div>
   
   <div class="content">
-    <app-festival-list [festivals]="festivals()"></app-festival-list>
+    <app-festival-list 
+      [festivals]="festivals()"
+      (festivalClicked)="openFestivalDetailsDialog($event)">
+    </app-festival-list>
   </div>
 </div>

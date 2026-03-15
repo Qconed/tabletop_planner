@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,4 +17,9 @@ import { Festival } from '../../../core/models/festival.model';
 })
 export class FestivalListComponent {
   festivals = input<Festival[]>([]);
+  festivalClicked = output<number>();
+
+  onFestivalClick(festivalId: number): void {
+    this.festivalClicked.emit(festivalId);
+  }
 }

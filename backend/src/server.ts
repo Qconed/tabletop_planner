@@ -10,7 +10,8 @@ async function buildFastify() {
   await fastify.register(import('@fastify/helmet')); // Security headers
   await fastify.register(import('@fastify/cors'), {
     origin: env.FRONTEND_ORIGIN,
-    credentials: true // Important for cookies
+    credentials: true, // Important for cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
   });
 
   // Register cookie support for HTTP-only cookies

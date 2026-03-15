@@ -2,11 +2,20 @@
   <mat-card-header>
     <mat-card-title>
       @if (isEditMode) {
-        Modifier le festival
+        @if (isViewMode) {
+          Détails du festival
+        } @else {
+          Modifier le festival
+        }
       } @else {
         Créer un nouveau festival
       }
     </mat-card-title>
+    @if (isEditMode && isViewMode) {
+      <button mat-icon-button color="primary" (click)="switchToEditMode()" class="edit-button" aria-label="Modifier le festival">
+        <mat-icon>edit</mat-icon>
+      </button>
+    }
   </mat-card-header>
 
   <mat-card-content>
@@ -47,10 +56,12 @@
       <div class="form-section">
         <div class="section-header">
           <h3 class="section-title">Classes tarifaires</h3>
-          <button type="button" mat-raised-button color="primary" (click)="addClasseTarifaire()">
-            <mat-icon>add</mat-icon>
-            Ajouter une classe
-          </button>
+          @if (!isViewMode) {
+            <button type="button" mat-raised-button color="primary" (click)="addClasseTarifaire()">
+              <mat-icon>add</mat-icon>
+              Ajouter une classe
+            </button>
+          }
         </div>
 
         @if (classesTarifaires.length === 0) {
@@ -60,7 +71,7 @@
         <div formArrayName="classesTarifaires" class="classes-container">
           @for (classe of classesTarifaires.controls; track $index) {
             <div [formGroupName]="$index" class="classe-tarifaire-item">
-              <div class="classe-fields">
+              <div class="classe-fields" [class.view-mode]="isViewMode">
                 <mat-form-field appearance="outline" class="classe-libelle">
                   <mat-label>Nom de la classe</mat-label>
                   <input matInput formControlName="libelle" placeholder="Ex: Grande Table, Petite Table">
@@ -85,15 +96,17 @@
                   }
                 </mat-form-field>
 
-                <button 
-                  type="button" 
-                  mat-icon-button 
-                  color="warn" 
-                  (click)="removeClasseTarifaire($index)"
-                  class="remove-btn"
-                  [attr.aria-label]="'Supprimer la classe ' + (classe.get('libelle')?.value || '')">
-                  <mat-icon>delete</mat-icon>
-                </button>
+                @if (!isViewMode) {
+                  <button 
+                    type="button" 
+                    mat-icon-button 
+                    color="warn" 
+                    (click)="removeClasseTarifaire($index)"
+                    class="remove-btn"
+                    [attr.aria-label]="'Supprimer la classe ' + (classe.get('libelle')?.value || '')">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
               </div>
             </div>
           }
@@ -111,19 +124,25 @@
       <!-- Actions -->
       <div class="form-actions">
         <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
-          Annuler
-        </button>
-        <button type="submit" mat-raised-button color="primary" [disabled]="isSubmitting || festivalForm.invalid">
-          @if (isSubmitting) {
-            Enregistrement...
+          @if (isViewMode) {
+            Fermer
           } @else {
-            @if (isEditMode) {
-              Mettre à jour
-            } @else {
-              Créer le festival
-            }
+            Annuler
           }
         </button>
+        @if (!isViewMode) {
+          <button type="submit" mat-raised-button color="primary" [disabled]="isSubmitting || festivalForm.invalid">
+            @if (isSubmitting) {
+              Enregistrement...
+            } @else {
+              @if (isEditMode) {
+                Mettre à jour
+              } @else {
+                Créer le festival
+              }
+            }
+          </button>
+        }
       </div>
     </form>
   </mat-card-content>

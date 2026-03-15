@@ -2,7 +2,7 @@
   @if (festivals().length > 0) {
     <div class="festivals-grid">
       @for (festival of festivals(); track festival.id) {
-        <mat-card class="festival-card">
+        <mat-card class="festival-card" (click)="onFestivalClick(festival.id)">
           <mat-card-header>
             <mat-card-title>{{ festival.nom }}</mat-card-title>
             <mat-card-subtitle class="festival-date">

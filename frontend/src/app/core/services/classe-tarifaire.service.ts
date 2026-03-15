@@ -25,7 +25,7 @@ export class ClasseTarifaireService {
 
   getByFestival(festivalId: number): Observable<ClasseTarifaire[]> {
     return this.http.get<ClasseTarifaire[]>(
-      this.apiConfig.getApiUrl(`/festivals/${festivalId}/classes-tarifaires`)
+      this.apiConfig.getApiUrl(`${this.endpoint}?idFestival=${festivalId}`)
     );
   }
 

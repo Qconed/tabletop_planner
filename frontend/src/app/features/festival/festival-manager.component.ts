@@ -84,6 +84,12 @@ export class FestivalManagerComponent implements OnInit {
       console.log('Festival mis à jour avec succès');
     });
 
+    dialogRef.componentInstance.festivalDeleted.subscribe(() => {
+      dialogRef.close();
+      this.loadFestivals();
+      console.log('Festival supprimé avec succès');
+    });
+
     dialogRef.componentInstance.formCancelled.subscribe(() => {
       dialogRef.close();
     });

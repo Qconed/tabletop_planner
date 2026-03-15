@@ -8,10 +8,12 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
 import { FestivalService } from '../../../core/services/festival.service';
 import { ClasseTarifaireService } from '../../../core/services/classe-tarifaire.service';
 import { Festival, FestivalCreateDto } from '../../../core/models/festival.model';
 import { forkJoin } from 'rxjs';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 interface ClasseTarifaireForm {
   id?: number;
@@ -41,6 +43,7 @@ export class FestivalFormComponent implements OnInit {
   @Input() festivalId?: number | null;
   @Output() formSubmitted = new EventEmitter<void>();
   @Output() formCancelled = new EventEmitter<void>();
+  @Output() festivalDeleted = new EventEmitter<void>();
 
   festivalForm!: FormGroup;
   festival?: Festival;
@@ -48,9 +51,12 @@ export class FestivalFormComponent implements OnInit {
   isSubmitting = false;
   errorMessage = signal<string>('');
   minDate = new Date();
+  private removedClasseTarifaireIds = new Set<number>();
+  private initialPersistedClassesTarifairesCount = 0;
 
   constructor(
     private fb: FormBuilder,
+    private dialog: MatDialog,
     private festivalService: FestivalService,
     private classeTarifaireService: ClasseTarifaireService
   ) {}
@@ -95,6 +101,7 @@ export class FestivalFormComponent implements OnInit {
   }
 
   switchToEditMode(): void {
+    this.errorMessage.set('');
     this.viewMode.set(false);
     this.festivalForm.enable();
   }
@@ -107,7 +114,7 @@ export class FestivalFormComponent implements OnInit {
         [Validators.required, Validators.min(1)]
       ],
       date: [null, [Validators.required]],
-      classesTarifaires: this.fb.array([], [Validators.required, Validators.minLength(1)])
+      classesTarifaires: this.fb.array([])
     });
   }
 
@@ -125,17 +132,34 @@ export class FestivalFormComponent implements OnInit {
   }
 
   addClasseTarifaire(): void {
+    this.errorMessage.set('');
     this.classesTarifaires.push(this.createClasseTarifaireFormGroup());
   }
 
   removeClasseTarifaire(index: number): void {
+    const classeControl = this.classesTarifaires.at(index);
+    const classeId = classeControl.get('id')?.value as number | null | undefined;
+
+    if (this.isEditMode && classeId && !this.canRemovePersistedClasseTarifaire()) {
+      this.errorMessage.set('Un festival existant doit conserver au moins une classe tarifaire enregistrée.');
+      return;
+    }
+
+    this.errorMessage.set('');
+
+    if (this.isEditMode && classeId) {
+      this.removedClasseTarifaireIds.add(classeId);
+    }
+
     this.classesTarifaires.removeAt(index);
   }
 
   private loadExistingClassesTarifaires(festival: Festival): void {
     this.classesTarifaires.clear();
+    this.removedClasseTarifaireIds.clear();
 
     const classesTarifaires = festival.classesTarifaires ?? [];
+    this.initialPersistedClassesTarifairesCount = classesTarifaires.filter((classe) => !!classe.id).length;
 
     classesTarifaires.forEach((classe) => {
       this.classesTarifaires.push(
@@ -149,15 +173,92 @@ export class FestivalFormComponent implements OnInit {
     });
   }
 
+  private canRemovePersistedClasseTarifaire(): boolean {
+    return this.persistedClasseTarifairesCount > 1;
+  }
+
+  private get persistedClasseTarifairesCount(): number {
+    return this.classesTarifaires.controls.filter((classe) => !!classe.get('id')?.value).length;
+  }
+
   // Validation personnalisée pour vérifier les noms uniques
   private validateUniqueNames(): boolean {
-    const names = this.classesTarifaires.value.map((ct: ClasseTarifaireForm) => ct.libelle.toLowerCase());
+    const names = this.classesTarifaires.value.map((ct: ClasseTarifaireForm) => ct.libelle.trim().toLowerCase());
     const uniqueNames = new Set(names);
     return names.length === uniqueNames.size;
   }
 
+  private validateClassesTarifairesOnSubmit(): boolean {
+    if (this.classesTarifaires.length === 0) {
+      this.errorMessage.set('Au moins une classe tarifaire est requise.');
+      return false;
+    }
+
+    if (
+      this.isEditMode
+      && this.initialPersistedClassesTarifairesCount > 0
+      && this.persistedClasseTarifairesCount === 0
+    ) {
+      this.errorMessage.set('Un festival existant doit conserver au moins une classe tarifaire enregistrée.');
+      return false;
+    }
+
+    return true;
+  }
+
+  confirmDeleteFestival(): void {
+    if (!this.festivalId || !this.festival) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '420px',
+      maxWidth: '95vw',
+      data: {
+        title: 'Supprimer le festival',
+        message: `Supprimer le festival "${this.festival.nom}" ? Les classes tarifaires associées seront aussi supprimées.`,
+        confirmLabel: 'Supprimer',
+        cancelLabel: 'Annuler',
+        confirmColor: 'warn',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.deleteFestival();
+      }
+    });
+  }
+
+  private deleteFestival(): void {
+    if (!this.festivalId) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.errorMessage.set('');
+
+    this.festivalService.delete(this.festivalId).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.festivalDeleted.emit();
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors de la suppression du festival:', err);
+        this.isSubmitting = false;
+        const errorMsg = err.error?.error || err.error?.message || err.message;
+        this.errorMessage.set('Erreur lors de la suppression du festival: ' + errorMsg);
+      }
+    });
+  }
+
   onSubmit(): void {
     if (this.festivalForm.invalid) {
+      this.festivalForm.markAllAsTouched();
+      return;
+    }
+
+    if (!this.validateClassesTarifairesOnSubmit()) {
       this.festivalForm.markAllAsTouched();
       return;
     }
@@ -231,7 +332,12 @@ export class FestivalFormComponent implements OnInit {
 
   private handleClassesTarifaires(festivalId: number): void {
     console.log('📤 Gestion des classes tarifaires pour le festival', festivalId);
-    
+
+    const deletedClassesRequests = Array.from(this.removedClasseTarifaireIds).map((classeId) => {
+      console.log('📤 Suppression classe tarifaire:', classeId);
+      return this.classeTarifaireService.delete(classeId);
+    });
+
     const classesTarifairesRequests = this.classesTarifaires.value.map(
       (classe: ClasseTarifaireForm) => {
         const prixEnCentimes = Math.round(classe.prixTable * 100); // Convertir en centimes
@@ -258,9 +364,18 @@ export class FestivalFormComponent implements OnInit {
       }
     );
 
-    forkJoin(classesTarifairesRequests).subscribe({
+    const requests = [...deletedClassesRequests, ...classesTarifairesRequests];
+
+    if (requests.length === 0) {
+      this.isSubmitting = false;
+      this.formSubmitted.emit();
+      return;
+    }
+
+    forkJoin(requests).subscribe({
       next: (results) => {
         console.log('✅ Toutes les classes tarifaires ont été traitées:', results);
+        this.removedClasseTarifaireIds.clear();
         this.isSubmitting = false;
         this.formSubmitted.emit();
       },
@@ -275,6 +390,16 @@ export class FestivalFormComponent implements OnInit {
 
   onCancel(): void {
     this.formCancelled.emit();
+  }
+
+  canRemoveClasseTarifaire(index: number): boolean {
+    const classeId = this.classesTarifaires.at(index).get('id')?.value as number | null | undefined;
+
+    if (!this.isEditMode || !classeId) {
+      return true;
+    }
+
+    return this.canRemovePersistedClasseTarifaire();
   }
 
   get isEditMode(): boolean {

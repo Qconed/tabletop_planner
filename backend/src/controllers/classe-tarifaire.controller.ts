@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import { classeTarifaireService } from '../services/classe-tarifaire.service.js';
+import { classeTarifaireService, LAST_CLASSE_TARIFAIRE_DELETE_ERROR } from '../services/classe-tarifaire.service.js';
 import {
   createClasseTarifaireSchema,
   updateClasseTarifaireSchema,
@@ -85,6 +85,9 @@ export const classeTarifaireController = {
     } catch (error: any) {
       if (error.name === 'ZodError') {
         return reply.code(400).send({ error: 'Paramètres invalides', details: error.errors });
+      }
+      if (error.code === LAST_CLASSE_TARIFAIRE_DELETE_ERROR) {
+        return reply.code(409).send({ error: error.message });
       }
       if (error.code === 'P2025') {
         return reply.code(404).send({ error: 'Classe tarifaire non trouvée' });

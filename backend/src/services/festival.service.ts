@@ -68,9 +68,9 @@ export const festivalService = {
     return prisma.festival.update({
       where: { id },
       data: {
-        ...(data.nom && { nom: data.nom }),
-        ...(data.nbTotalTables && { nbTotalTables: data.nbTotalTables }),
-        ...(data.date && { date: new Date(data.date) }),
+        ...(data.nom !== undefined && { nom: data.nom }),
+        ...(data.nbTotalTables !== undefined && { nbTotalTables: data.nbTotalTables }),
+        ...(data.date !== undefined && { date: new Date(data.date) }),
       },
     });
   },

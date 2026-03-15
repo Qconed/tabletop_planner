@@ -11,7 +11,7 @@ export const createClasseTarifaireSchema = z.object({
   nbTotalTables: z.number().int().positive('Le nombre de tables doit être positif'),
 });
 
-export const updateClasseTarifaireSchema = createClasseTarifaireSchema.partial();
+export const updateClasseTarifaireSchema = createClasseTarifaireSchema.omit({ idFestival: true }).partial();
 
 export const classeTarifaireIdSchema = z.object({
   id: z.string().regex(/^\d+$/).transform(Number),

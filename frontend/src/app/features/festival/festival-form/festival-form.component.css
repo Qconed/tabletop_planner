@@ -11,8 +11,19 @@ mat-card-header {
   align-items: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.5rem);
+  margin-left: auto;
+}
+
 .edit-button {
   margin-left: auto;
+}
+
+.delete-festival-button {
+  margin-left: 0;
 }
 
 .festival-form {
@@ -151,6 +162,10 @@ mat-card-header {
   .section-header {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .header-actions {
     gap: var(--spacing-sm);
   }
 

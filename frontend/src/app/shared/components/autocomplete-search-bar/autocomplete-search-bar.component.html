@@ -1,0 +1,32 @@
+<mat-form-field appearance="outline" class="autocomplete-search-field">
+  <mat-label>{{ label() }}</mat-label>
+  <input
+    matInput
+    type="text"
+    #autoTrigger="matAutocompleteTrigger"
+    [value]="searchTerm()"
+    [matAutocomplete]="autocompleteRef"
+    appDebouncedInput
+    [debounceTime]="debounceDelay()"
+    (focus)="onInputFocus(autoTrigger)"
+    (debouncedValueChange)="onDebouncedSearch($event)" />
+
+  @if (isLoading()) {
+    <mat-spinner matSuffix diameter="18"></mat-spinner>
+  }
+
+  <mat-autocomplete
+    #autocompleteRef="matAutocomplete"
+    autoActiveFirstOption
+    (optionSelected)="onOptionSelected($event.option.value)">
+    @if (options().length > 0) {
+      @for (option of options(); track option.value) {
+        <mat-option [value]="option.label">{{ option.label }}</mat-option>
+      }
+    }
+
+    @if (!isLoading() && hasSearchValue() && options().length === 0) {
+      <mat-option disabled>{{ noResultsText() }}</mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>

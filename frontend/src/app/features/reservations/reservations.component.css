@@ -15,10 +15,6 @@
   color: var(--color-text-secondary);
 }
 
-.search-field {
-  width: min(100%, 560px);
-}
-
 .selection-preview {
   width: min(100%, 560px);
   background: color-mix(in srgb, var(--color-secondary) 8%, white);

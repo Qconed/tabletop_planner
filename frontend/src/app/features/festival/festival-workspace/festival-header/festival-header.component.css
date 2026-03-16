@@ -1,0 +1,48 @@
+
+.festival-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    height: 64px;
+    background-color: var(--primary-color, #0c5baa);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-left .mat-icon-button {
+    color: white;
+}
+
+.festival-name {
+    font-size: 1.25rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+    cursor: pointer;
+}
+
+.header-right .mat-button {
+    color: white;
+}
+
+.btn-text {
+    margin-left: 8px;
+}
+
+@media (max-width: 600px) {
+    .btn-text {
+    display: none;
+    }
+    .festival-name {
+    max-width: 150px;
+    }
+}

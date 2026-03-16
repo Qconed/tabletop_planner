@@ -1,4 +1,6 @@
-<app-navbar (loginClick)="onLoginClick()" />
+@if (!isWorkspaceRoute()) {
+  <app-navbar (loginClick)="onLoginClick()" />
+}
 <router-outlet></router-outlet>
 
 @if (authModal.showLogin() || authModal.showRegister()) {

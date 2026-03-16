@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { map } from 'rxjs';
-import { Editeur } from '../../core/models/editeur.model';
-import { EditeurService } from '../../core/services/editeur.service';
+import { Editeur } from '../../../../core/models/editeur.model';
+import { EditeurService } from '../../../../core/services/editeur.service';
 import {
   AutocompleteSearchBarComponent,
   AutocompleteSearchOption
-} from '../../shared/components/autocomplete-search-bar/autocomplete-search-bar.component';
+} from '../../../../shared/components/autocomplete-search-bar/autocomplete-search-bar.component';
 
 @Component({
   selector: 'app-reservations',
@@ -30,7 +30,7 @@ export class ReservationsComponent {
       )
     );
 
-  constructor(private readonly editeurService: EditeurService) {}
+  constructor(private readonly editeurService: EditeurService) { }
 
   onEditeurTermSelected(term: string): void {
     this.selectedEditeurTerm.set(term);

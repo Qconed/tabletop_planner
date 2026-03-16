@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal } from '@angular/core';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
@@ -13,7 +14,16 @@ import { AuthModalService } from './core/services/auth-modal.service';
   styleUrl: './app.css'
 })
 export class App {
-  constructor(public authModal: AuthModalService) {}
+  isWorkspaceRoute = signal(false);
+
+  constructor(public authModal: AuthModalService, private router: Router) {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      const isWorkspace = event.urlAfterRedirects.startsWith('/festivals/') && event.urlAfterRedirects !== '/festivals';
+      this.isWorkspaceRoute.set(isWorkspace);
+    });
+  }
 
   onLoginClick(): void {
     this.authModal.openLogin();

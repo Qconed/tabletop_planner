@@ -1,0 +1,21 @@
+<header class="festival-header">
+    <div class="header-left">
+    <button mat-icon-button routerLink="/festivals" aria-label="Retour à la liste des festivals">
+        <mat-icon>grid_view</mat-icon>
+    </button>
+    <span class="festival-name" [routerLink]="['/festivals', store.festivalId()]" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        {{ store.festival()?.nom || 'Chargement...' }}
+    </span>
+    </div>
+    
+    <div class="header-right">
+    <button mat-button [routerLink]="['/festivals', store.festivalId(), 'reservations']">
+        <mat-icon>table_restaurant</mat-icon>
+        <span class="btn-text">Réservations</span>
+    </button>
+    <button mat-button color="warn" (click)="onLogout()">
+        <mat-icon>logout</mat-icon>
+        <span class="btn-text">Se déconnecter</span>
+    </button>
+    </div>
+</header>

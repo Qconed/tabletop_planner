@@ -1,0 +1,147 @@
+/* Personnalisation minimaliste de Material Components */
+
+/* Suppression des animations complexes pour garder un style minimaliste */
+.mat-mdc-form-field {
+  font-family: inherit !important;
+}
+
+/* Customisation des form fields */
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline {
+  color: var(--color-border) !important;
+}
+
+.mat-mdc-form-field-appearance-outline.mat-focused .mat-mdc-form-field-outline-thick {
+  color: var(--color-secondary) !important;
+}
+
+.mat-mdc-form-field-error {
+  color: var(--color-error) !important;
+}
+
+/* Labels */
+.mat-mdc-form-field-label {
+  color: var(--color-text-secondary) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-label {
+  color: var(--color-secondary) !important;
+}
+
+/* Inputs */
+.mat-mdc-input-element {
+  color: var(--color-text-primary) !important;
+}
+
+/* Buttons */
+.mat-mdc-raised-button,
+.mat-mdc-button,
+.mat-mdc-icon-button,
+.mat-mdc-stroked-button {
+  font-family: inherit !important;
+  border-radius: var(--radius-md) !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  transition: all var(--transition-base) !important;
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--color-secondary) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+.mat-mdc-raised-button.mat-primary:hover:not([disabled]) {
+  background-color: var(--color-secondary-dark) !important;
+}
+
+.mat-mdc-raised-button.mat-warn,
+.mat-mdc-icon-button.mat-warn {
+  background-color: var(--color-error) !important;
+}
+
+.mat-mdc-stroked-button {
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.mat-mdc-stroked-button:hover:not([disabled]) {
+  background-color: var(--color-background-alt) !important;
+}
+
+/* Icons */
+.mat-icon {
+  color: inherit !important;
+}
+
+/* Cards */
+.mat-mdc-card {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+  background-color: var(--color-surface) !important;
+}
+
+.mat-mdc-card-header {
+  padding: var(--spacing-lg) var(--spacing-lg) 0 !important;
+}
+
+.mat-mdc-card-content {
+  padding: var(--spacing-lg) !important;
+}
+
+.mat-mdc-card-title {
+  color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 1.5rem !important;
+  margin: 0 !important;
+}
+
+/* Datepicker */
+.mat-datepicker-content {
+  background-color: var(--color-surface) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.mat-calendar-body-selected {
+  background-color: var(--color-secondary) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+.mat-calendar-body-cell:hover .mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+  background-color: var(--color-background-alt) !important;
+}
+
+/* Dialog - Correction du conflit avec les styles globaux */
+.mat-mdc-dialog-container {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  background-color: var(--color-surface) !important;
+  padding: 0 !important; /* Évite le padding par défaut qui interfère avec mat-card */
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* S'assurer que le dialog ne soit pas affecté par les styles d'overlay globaux */
+.cdk-overlay-pane {
+  z-index: 1100 !important; /* Plus haut que l'overlay custom (1000) */
+}
+
+.cdk-overlay-backdrop {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Suppression des ripples pour un style plus minimaliste */
+.mat-mdc-button .mat-mdc-button-ripple,
+.mat-mdc-raised-button .mat-mdc-button-ripple,
+.mat-mdc-icon-button .mat-mdc-button-ripple {
+  display: none;
+}
+
+/* Correction pour éviter les conflits entre dialog Material et overlay custom */
+body.cdk-global-scrollblock {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+}

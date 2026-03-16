@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "npx prisma studio --port 5555 --hostname 0.0.0.0",
-    "dev:compose": "npm run prisma:generate && npm run prisma:migrate:deploy && npm run dev"
+    "dev:compose": "npm run prisma:generate && npm run prisma:migrate:deploy && npm run dev",
+    "migrate:csv": "tsx src/scripts/migrate-csv-data.ts"
   },
   "keywords": [],
   "author": "",

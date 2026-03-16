@@ -1,28 +1,29 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { AuthService } from './core/services/auth.service';
-import { LoginComponent } from './features/login/login.component';
-import { RegisterComponent } from './features/register/register.component';
-import { UserDashboardComponent } from './features/user-dashboard.component';
+import { NavbarComponent } from './shared/navbar/navbar.component';
+import { LoginComponent } from './features/auth/login/login.component';
+import { RegisterComponent } from './features/auth/register/register.component';
+import { EscClosableDirective } from './shared/directives/esc-closable.directive';
+import { AuthModalService } from './core/services/auth-modal.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, LoginComponent, RegisterComponent, UserDashboardComponent],
+  imports: [RouterOutlet, NavbarComponent, LoginComponent, RegisterComponent, EscClosableDirective],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('Tabletop Planner');
-  protected readonly showRegister = signal(false);
+  constructor(public authModal: AuthModalService) {}
 
-  constructor(public authService: AuthService) {}
-
-  switchToRegister(): void {
-    this.showRegister.set(true);
+  onLoginClick(): void {
+    this.authModal.openLogin();
   }
 
-  switchToLogin(): void {
-    this.showRegister.set(false);
+  openRegister(): void {
+    this.authModal.openRegister();
+  }
+
+  closeOverlay(): void {
+    this.authModal.close();
   }
 }

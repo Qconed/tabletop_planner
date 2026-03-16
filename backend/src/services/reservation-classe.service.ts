@@ -1,0 +1,76 @@
+import { PrismaClient } from '@prisma/client';
+import type { CreateReservationClasseInput, UpdateReservationClasseInput, ReservationClasseQueryInput } from '../schemas/reservation-classe.schemas.js';
+
+const prisma = new PrismaClient();
+
+export const reservationClasseService = {
+  async getAll(query?: ReservationClasseQueryInput) {
+    const where: any = {};
+
+    if (query?.idReservation) {
+      where.idReservation = query.idReservation;
+    }
+
+    if (query?.idClasseTarifaire) {
+      where.idClasseTarifaire = query.idClasseTarifaire;
+    }
+
+    return prisma.reservationClasse.findMany({
+      where,
+      include: {
+        reservation: {
+          include: {
+            editeur: {
+              select: {
+                libelle: true,
+              },
+            },
+          },
+        },
+        classeTarifaire: true,
+      },
+    });
+  },
+
+  async getById(id: number) {
+    return prisma.reservationClasse.findUnique({
+      where: { id },
+      include: {
+        reservation: {
+          include: {
+            editeur: true,
+            festival: true,
+          },
+        },
+        classeTarifaire: true,
+      },
+    });
+  },
+
+  async create(data: CreateReservationClasseInput) {
+    return prisma.reservationClasse.create({
+      data,
+      include: {
+        reservation: true,
+        classeTarifaire: true,
+      },
+    });
+  },
+
+  async update(id: number, data: UpdateReservationClasseInput) {
+    return prisma.reservationClasse.update({
+      where: { id },
+      data,
+      include: {
+        reservation: true,
+        classeTarifaire: true,
+      },
+    });
+  },
+
+  async delete(id: number) {
+    return prisma.reservationClasse.delete({
+      where: { id },
+    });
+  },
+};

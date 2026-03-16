@@ -1,14 +1,7 @@
-:host {
-  display: block;
-  min-height: 100vh;
+.landing {
+  min-height: calc(100vh - 4rem);
 }
 
-.main-content {
-  flex: 1;
-  padding: 2rem 1rem;
-}
-
-/* Modal Overlay Styles */
 .overlay {
   position: fixed;
   top: 0;

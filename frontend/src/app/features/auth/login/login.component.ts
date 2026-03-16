@@ -39,7 +39,7 @@ export class LoginComponent {
         next: (response) => {
           this.isLoading.set(false);
           console.log('Login successful:', response.message);
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/festivals']);
         },
         error: (error) => {
           this.isLoading.set(false);

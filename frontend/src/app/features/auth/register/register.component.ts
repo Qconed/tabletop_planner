@@ -53,7 +53,7 @@ export class RegisterComponent {
         next: (response) => {
           this.isLoading.set(false);
           console.log('Registration successful:', response.message);
-          this.router.navigate(['/']);
+          this.router.navigate(['/festivals']);
         },
         error: (error) => {
           this.isLoading.set(false);

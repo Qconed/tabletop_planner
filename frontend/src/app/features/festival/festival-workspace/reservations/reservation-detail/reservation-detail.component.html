@@ -19,11 +19,6 @@
 
     <form class="detail-form" [formGroup]="form" (ngSubmit)="save()">
       <label>
-        Nombre total de tables
-        <input type="number" min="1" formControlName="nbTablesResa" />
-      </label>
-
-      <label>
         Statut
         <select formControlName="statut">
           @for (statut of statuts; track statut) {
@@ -39,17 +34,45 @@
 
       <section class="classes-section">
         <h3>Répartition classes tarifaires</h3>
-        @if (!reservation.reservationClasses || reservation.reservationClasses.length === 0) {
-          <p>Aucune classe tarifaire associée à cette réservation.</p>
-        } @else {
-          <ul>
-            @for (reservationClasse of reservation.reservationClasses; track reservationClasse.id) {
-              <li>
-                {{ reservationClasse.classeTarifaire?.libelle || 'Classe inconnue' }}: {{ reservationClasse.nbTables }} table(s)
-              </li>
-            }
-          </ul>
-        }
+        <div class="classes-header-actions">
+          <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
+          <button type="button" class="btn-secondary" (click)="addReservationClasseRow()">Ajouter une classe</button>
+        </div>
+
+        <div formArrayName="reservationClasses" class="reservation-classes-list">
+          @for (group of reservationClasses.controls; track $index) {
+            <div class="reservation-class-row" [formGroupName]="$index">
+              <input type="hidden" formControlName="id" />
+
+              <label>
+                Classe tarifaire
+                <select formControlName="idClasseTarifaire">
+                  <option [ngValue]="0">Sélectionner une classe</option>
+                  @for (classe of classesTarifaires(); track classe.id) {
+                    <option [ngValue]="classe.id" [disabled]="isClasseOptionDisabled($index, classe.id)">
+                      {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                Nombre de tables
+                <input type="number" min="1" formControlName="nbTables" />
+              </label>
+
+              <button type="button" class="btn-danger" (click)="removeReservationClasseRow($index)">Supprimer</button>
+
+              @if (getClasseCapacityWarning($index); as warningMessage) {
+                <p class="capacity-warning">{{ warningMessage }}</p>
+              }
+            </div>
+          }
+        </div>
+
+        <p class="total-tables-display">
+          Total des tables sélectionnées: <strong>{{ getSelectedTablesTotal() }}</strong>
+        </p>
       </section>
 
       <div class="actions">

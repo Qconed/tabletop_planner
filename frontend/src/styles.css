@@ -18,3 +18,20 @@ body {
   background-color: var(--color-background);
   color: var(--color-text-primary);
 }
+
+.autocomplete-search-panel {
+  --mat-autocomplete-background-color: #ffffff;
+  --mdc-menu-container-color: #ffffff;
+  background: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.autocomplete-search-panel .mat-mdc-option {
+  background: #ffffff;
+}
+
+.cdk-overlay-pane .autocomplete-search-panel.mat-mdc-autocomplete-panel,
+.cdk-overlay-pane .mat-mdc-autocomplete-panel.autocomplete-search-panel {
+  background: #ffffff !important;
+  opacity: 1 !important;
+}

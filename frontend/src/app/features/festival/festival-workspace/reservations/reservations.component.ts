@@ -47,7 +47,6 @@ export class ReservationsComponent {
   readonly selectedEditeur = signal<Editeur | null>(null);
 
   readonly createForm = this.fb.nonNullable.group({
-    nbTablesResa: [1, [Validators.required, Validators.min(1)]],
     notesResa: [''],
     statut: ['PAS_DE_CONTACT' as StatutWorkflow, Validators.required],
     reservationClasses: this.fb.array([]),
@@ -81,6 +80,9 @@ export class ReservationsComponent {
       const festivalId = this.workspaceStore.festivalId();
       if (festivalId) {
         this.loadReservationContext(festivalId);
+        if (this.reservationClasses.length === 0) {
+          this.addReservationClasse();
+        }
       }
     });
   }
@@ -96,6 +98,31 @@ export class ReservationsComponent {
 
   removeReservationClasse(index: number): void {
     this.reservationClasses.removeAt(index);
+  }
+
+  isClasseOptionDisabled(rowIndex: number, classeId: number): boolean {
+    return this.reservationClasses.controls.some((control, index) => {
+      if (index === rowIndex) {
+        return false;
+      }
+
+      const value = control.getRawValue() as { idClasseTarifaire: number | string };
+      return Number(value.idClasseTarifaire) === classeId;
+    });
+  }
+
+  getSelectedTablesTotal(): number {
+    return this.reservationClasses.controls.reduce((total, control) => {
+      const value = control.getRawValue() as { idClasseTarifaire: number | string; nbTables: number | string };
+      const idClasseTarifaire = Number(value.idClasseTarifaire);
+      const nbTables = Number(value.nbTables);
+
+      if (idClasseTarifaire <= 0 || nbTables <= 0) {
+        return total;
+      }
+
+      return total + nbTables;
+    }, 0);
   }
 
   onEditeurTermSelected(term: string): void {
@@ -124,8 +151,25 @@ export class ReservationsComponent {
 
     const formValue = this.createForm.getRawValue();
     const reservationClasses = this.reservationClasses.controls
-      .map((control) => control.getRawValue() as { idClasseTarifaire: number; nbTables: number })
-      .filter((value) => value.idClasseTarifaire > 0);
+      .map((control) => control.getRawValue() as { idClasseTarifaire: number | string; nbTables: number | string })
+      .map((value) => ({
+        idClasseTarifaire: Number(value.idClasseTarifaire),
+        nbTables: Number(value.nbTables),
+      }))
+      .filter((value) => value.idClasseTarifaire > 0 && value.nbTables > 0);
+
+    if (reservationClasses.length === 0) {
+      this.errorMessage.set('Ajouter au moins une classe tarifaire est obligatoire.');
+      return;
+    }
+
+    const selectedClasseIds = reservationClasses.map((value) => value.idClasseTarifaire);
+    if (new Set(selectedClasseIds).size !== selectedClasseIds.length) {
+      this.errorMessage.set('Une classe tarifaire ne peut être sélectionnée qu\'une seule fois.');
+      return;
+    }
+
+    const totalTables = this.getSelectedTablesTotal();
 
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
@@ -134,7 +178,7 @@ export class ReservationsComponent {
     this.reservationService.create({
       idEditeur: selectedEditeur.id,
       idFestival: festivalId,
-      nbTablesResa: formValue.nbTablesResa,
+      nbTablesResa: totalTables,
       notesResa: formValue.notesResa?.trim() || undefined,
       statut: formValue.statut,
       reservationClasses,
@@ -146,7 +190,8 @@ export class ReservationsComponent {
         this.isSubmitting.set(false);
       },
       error: (error) => {
-        this.errorMessage.set(error?.error?.error ?? 'Impossible de créer la réservation.');
+        const zodDetails = error?.error?.details?.[0]?.message as string | undefined;
+        this.errorMessage.set(zodDetails ?? error?.error?.error ?? 'Impossible de créer la réservation.');
         this.isSubmitting.set(false);
       },
     });
@@ -187,12 +232,12 @@ export class ReservationsComponent {
 
   private resetCreateForm(): void {
     this.createForm.reset({
-      nbTablesResa: 1,
       notesResa: '',
       statut: 'PAS_DE_CONTACT',
     });
     this.selectedEditeur.set(null);
     this.selectedEditeurTerm.set(null);
     this.reservationClasses.clear();
+    this.addReservationClasse();
   }
 }

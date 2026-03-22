@@ -85,19 +85,98 @@ export const reservationService = {
   },
 
   async create(data: CreateReservationInput) {
-    return prisma.reservation.create({
-      data,
-      include: {
-        editeur: true,
-        festival: true,
-      },
+    return prisma.$transaction(async (tx) => {
+      const {
+        reservationClasses,
+        idEditeur,
+        idFestival,
+        notesResa,
+        nbTablesResa,
+        statut,
+      } = data;
+
+      if (reservationClasses && reservationClasses.length > 0) {
+        const classeTarifaireIds = reservationClasses.map((item) => item.idClasseTarifaire);
+
+        const classesTarifaires = await tx.classeTarifaire.findMany({
+          where: {
+            id: { in: classeTarifaireIds },
+          },
+          select: {
+            id: true,
+            idFestival: true,
+            nbTotalTables: true,
+          },
+        });
+
+        if (classesTarifaires.length !== classeTarifaireIds.length) {
+          const error = new Error('Une ou plusieurs classes tarifaires sont invalides.') as Error & { code: string };
+          error.code = 'RESERVATION_INVALID_CLASSE_TARIFAIRE';
+          throw error;
+        }
+
+        const classById = new Map(classesTarifaires.map((classeTarifaire) => [classeTarifaire.id, classeTarifaire]));
+
+        for (const reservationClasse of reservationClasses) {
+          const classeTarifaire = classById.get(reservationClasse.idClasseTarifaire);
+
+          if (!classeTarifaire || classeTarifaire.idFestival !== idFestival) {
+            const error = new Error('Chaque classe tarifaire doit appartenir au festival de la réservation.') as Error & { code: string };
+            error.code = 'RESERVATION_FESTIVAL_MISMATCH';
+            throw error;
+          }
+
+          if (reservationClasse.nbTables > classeTarifaire.nbTotalTables) {
+            const error = new Error(`Le nombre de tables pour la classe ${classeTarifaire.id} dépasse sa capacité.`) as Error & { code: string };
+            error.code = 'RESERVATION_CLASS_CAPACITY_EXCEEDED';
+            throw error;
+          }
+        }
+      }
+
+      const createData = {
+        idEditeur,
+        idFestival,
+        nbTablesResa,
+        statut,
+        ...(notesResa !== undefined && { notesResa }),
+        ...(reservationClasses && reservationClasses.length > 0 && {
+          reservationClasses: {
+            create: reservationClasses.map((reservationClasse) => ({
+              idClasseTarifaire: reservationClasse.idClasseTarifaire,
+              nbTables: reservationClasse.nbTables,
+            })),
+          },
+        }),
+      };
+
+      return tx.reservation.create({
+        data: createData,
+        include: {
+          editeur: true,
+          festival: true,
+          reservationClasses: {
+            include: {
+              classeTarifaire: true,
+            },
+          },
+        },
+      });
     });
   },
 
   async update(id: number, data: UpdateReservationInput) {
+    const updateData = {
+      ...(data.idEditeur !== undefined && { idEditeur: data.idEditeur }),
+      ...(data.idFestival !== undefined && { idFestival: data.idFestival }),
+      ...(data.notesResa !== undefined && { notesResa: data.notesResa }),
+      ...(data.nbTablesResa !== undefined && { nbTablesResa: data.nbTablesResa }),
+      ...(data.statut !== undefined && { statut: data.statut }),
+    };
+
     return prisma.reservation.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
         editeur: true,
         festival: true,

@@ -51,8 +51,17 @@ export const reservationController = {
       if (error.name === 'ZodError') {
         return reply.code(400).send({ error: 'Données invalides', details: error.errors });
       }
+      if (error.code === 'RESERVATION_INVALID_CLASSE_TARIFAIRE') {
+        return reply.code(400).send({ error: 'Une ou plusieurs classes tarifaires sont invalides' });
+      }
+      if (error.code === 'RESERVATION_FESTIVAL_MISMATCH') {
+        return reply.code(400).send({ error: 'Les classes tarifaires doivent appartenir au festival sélectionné' });
+      }
+      if (error.code === 'RESERVATION_CLASS_CAPACITY_EXCEEDED') {
+        return reply.code(400).send({ error: error.message });
+      }
       if (error.code === 'P2003') {
-        return reply.code(400).send({ error: 'Éditeur ou festival invalide' });
+        return reply.code(400).send({ error: 'Éditeur, festival ou classe tarifaire invalide' });
       }
       return reply.code(500).send({ error: 'Erreur lors de la création de la réservation', details: error.message });
     }

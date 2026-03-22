@@ -1,0 +1,61 @@
+<section class="reservation-detail-page">
+  <button type="button" class="btn-back" (click)="backToList()">Retour à la liste</button>
+
+  @if (errorMessage(); as errorMessage) {
+    <p class="feedback error">{{ errorMessage }}</p>
+  }
+
+  @if (successMessage(); as successMessage) {
+    <p class="feedback success">{{ successMessage }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>Chargement...</p>
+  } @else if (reservation(); as reservation) {
+    <header class="detail-header">
+      <h2>Réservation #{{ reservation.id }}</h2>
+      <p>{{ reservation.editeur?.libelle || 'Éditeur inconnu' }}</p>
+    </header>
+
+    <form class="detail-form" [formGroup]="form" (ngSubmit)="save()">
+      <label>
+        Nombre total de tables
+        <input type="number" min="1" formControlName="nbTablesResa" />
+      </label>
+
+      <label>
+        Statut
+        <select formControlName="statut">
+          @for (statut of statuts; track statut) {
+            <option [value]="statut">{{ formatStatut(statut) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Notes
+        <textarea rows="4" formControlName="notesResa"></textarea>
+      </label>
+
+      <section class="classes-section">
+        <h3>Répartition classes tarifaires</h3>
+        @if (!reservation.reservationClasses || reservation.reservationClasses.length === 0) {
+          <p>Aucune classe tarifaire associée à cette réservation.</p>
+        } @else {
+          <ul>
+            @for (reservationClasse of reservation.reservationClasses; track reservationClasse.id) {
+              <li>
+                {{ reservationClasse.classeTarifaire?.libelle || 'Classe inconnue' }}: {{ reservationClasse.nbTables }} table(s)
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <div class="actions">
+        <button type="submit" class="btn-primary" [disabled]="isSaving()">Enregistrer</button>
+        <button type="button" class="btn-danger" [disabled]="isSaving()" (click)="deleteReservation()">Supprimer</button>
+      </div>
+    </form>
+  }
+</section>

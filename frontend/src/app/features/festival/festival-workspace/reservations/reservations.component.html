@@ -1,29 +1,131 @@
 <section class="reservations-page">
   <header class="page-header">
     <h2>Reservations</h2>
-    <p>Recherchez rapidement un editeur via autocomplete.</p>
+    <p>Créez une réservation avec classes tarifaires, puis gérez-la depuis la liste.</p>
   </header>
 
-  <app-autocomplete-search-bar
-    [label]="'Rechercher un editeur'"
-    [noResultsText]="'Aucun editeur trouve'"
-    [debounceDelay]="350"
-    [fetchOptions]="editeurOptionsProvider"
-    (termSelected)="onEditeurTermSelected($event)"
-    (optionSelected)="onEditeurOptionSelected($event)" />
-
-  @if (selectedEditeur(); as editeur) {
-    <section class="selection-preview">
-      <h3>Editeur selectionne</h3>
-      <p><strong>{{ editeur.libelle }}</strong></p>
-      <p>Expose des jeux: {{ editeur.exposeJeux ? 'Oui' : 'Non' }}</p>
-    </section>
+  @if (errorMessage(); as errorMessage) {
+    <p class="feedback error">{{ errorMessage }}</p>
   }
 
-  @if (!selectedEditeur() && selectedEditeurTerm(); as term) {
-    <section class="selection-preview">
-      <h3>Terme selectionne</h3>
-      <p><strong>{{ term }}</strong></p>
-    </section>
+  @if (successMessage(); as successMessage) {
+    <p class="feedback success">{{ successMessage }}</p>
   }
+
+  <section class="create-section">
+    <h3>Créer une réservation</h3>
+
+    <app-autocomplete-search-bar
+      [label]="'Rechercher un editeur'"
+      [noResultsText]="'Aucun editeur trouve'"
+      [debounceDelay]="350"
+      [fetchOptions]="editeurOptionsProvider"
+      (termSelected)="onEditeurTermSelected($event)"
+      (optionSelected)="onEditeurOptionSelected($event)" />
+
+    @if (selectedEditeur(); as editeur) {
+      <section class="selection-preview">
+        <h4>Editeur sélectionné</h4>
+        <p><strong>{{ editeur.libelle }}</strong></p>
+        <p>Expose des jeux: {{ editeur.exposeJeux ? 'Oui' : 'Non' }}</p>
+      </section>
+    }
+
+    @if (!selectedEditeur() && selectedEditeurTerm(); as term) {
+      <section class="selection-preview">
+        <h4>Terme saisi</h4>
+        <p><strong>{{ term }}</strong></p>
+      </section>
+    }
+
+    <form class="reservation-form" [formGroup]="createForm" (ngSubmit)="createReservation()">
+      <label>
+        Nombre total de tables
+        <input type="number" min="1" formControlName="nbTablesResa" />
+      </label>
+
+      <label>
+        Statut
+        <select formControlName="statut">
+          @for (statut of statuts; track statut) {
+            <option [value]="statut">{{ formatStatut(statut) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Notes
+        <textarea formControlName="notesResa" rows="3" placeholder="Notes optionnelles"></textarea>
+      </label>
+
+      <section class="reservation-classes">
+        <div class="reservation-classes-header">
+          <h4>Classes tarifaires</h4>
+          <button type="button" class="btn-secondary" (click)="addReservationClasse()">Ajouter une classe</button>
+        </div>
+
+        @if (classesTarifaires().length === 0) {
+          <p class="hint">Aucune classe tarifaire disponible pour ce festival.</p>
+        }
+
+        <div formArrayName="reservationClasses" class="reservation-classes-list">
+          @for (group of reservationClasses.controls; track $index) {
+            <div class="reservation-class-row" [formGroupName]="$index">
+              <label>
+                Classe tarifaire
+                <select formControlName="idClasseTarifaire">
+                  <option [value]="0">Sélectionner une classe</option>
+                  @for (classe of classesTarifaires(); track classe.id) {
+                    <option [value]="classe.id">{{ classe.libelle }} (capacité {{ classe.nbTotalTables }})</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                Nombre de tables
+                <input type="number" min="1" formControlName="nbTables" />
+              </label>
+
+              <button type="button" class="btn-danger" (click)="removeReservationClasse($index)">Supprimer</button>
+            </div>
+          }
+        </div>
+      </section>
+
+      <button type="submit" class="btn-primary" [disabled]="isSubmitting() || isLoading()">Créer la réservation</button>
+    </form>
+  </section>
+
+  <section class="reservations-list-section">
+    <h3>Réservations existantes</h3>
+
+    @if (isLoading()) {
+      <p>Chargement...</p>
+    } @else if (reservations().length === 0) {
+      <p>Aucune réservation pour ce festival.</p>
+    } @else {
+      <div class="reservations-table-wrapper">
+        <table class="reservations-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Éditeur</th>
+              <th>Tables totales</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (reservation of reservations(); track reservation.id) {
+              <tr (click)="openReservationDetail(reservation.id)">
+                <td>{{ reservation.id }}</td>
+                <td>{{ reservation.editeur?.libelle || 'Éditeur inconnu' }}</td>
+                <td>{{ reservation.nbTablesResa }}</td>
+                <td>{{ formatStatut(reservation.statut) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
 </section>

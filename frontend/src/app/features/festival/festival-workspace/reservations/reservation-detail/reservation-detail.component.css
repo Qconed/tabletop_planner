@@ -1,0 +1,123 @@
+.reservation-detail-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.btn-back {
+  justify-self: start;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.8rem;
+  background: color-mix(in srgb, var(--color-primary) 14%, white);
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feedback {
+  margin: 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.feedback.error {
+  color: #8a1f11;
+  background: #fde9e7;
+  border: 1px solid #f3b8b1;
+}
+
+.feedback.success {
+  color: #185a28;
+  background: #e8f8ed;
+  border: 1px solid #b5e3c2;
+}
+
+.detail-header {
+  background: white;
+  border: 1px solid color-mix(in srgb, var(--color-border) 78%, white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.detail-header h2 {
+  margin: 0;
+}
+
+.detail-header p {
+  margin: var(--spacing-xs) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.detail-form {
+  background: white;
+  border: 1px solid color-mix(in srgb, var(--color-border) 78%, white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.detail-form label {
+  display: grid;
+  gap: var(--spacing-xs);
+  font-weight: 600;
+}
+
+.detail-form input,
+.detail-form select,
+.detail-form textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+}
+
+.classes-section {
+  border: 1px solid color-mix(in srgb, var(--color-border) 84%, white);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.classes-section h3 {
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.classes-section ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.btn-primary,
+.btn-danger {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-primary:disabled,
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

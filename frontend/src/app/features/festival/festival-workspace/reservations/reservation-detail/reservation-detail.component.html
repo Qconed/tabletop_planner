@@ -36,7 +36,7 @@
         <h3>Répartition classes tarifaires</h3>
         <div class="classes-header-actions">
           <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
-          <button type="button" class="btn-secondary" (click)="addReservationClasseRow()">Ajouter une classe</button>
+          <button type="button" class="btn-secondary" (click)="addReservationClasseRow()" [disabled]="!hasAvailableClasses()">Ajouter une classe</button>
         </div>
 
         <div formArrayName="reservationClasses" class="reservation-classes-list">
@@ -47,9 +47,8 @@
               <label>
                 Classe tarifaire
                 <select formControlName="idClasseTarifaire">
-                  <option [ngValue]="0">Sélectionner une classe</option>
-                  @for (classe of classesTarifaires(); track classe.id) {
-                    <option [ngValue]="classe.id" [disabled]="isClasseOptionDisabled($index, classe.id)">
+                  @for (classe of getAvailableClassesForRow($index); track classe.id) {
+                    <option [ngValue]="classe.id">
                       {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
                     </option>
                   }

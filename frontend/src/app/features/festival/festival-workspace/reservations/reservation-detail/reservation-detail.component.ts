@@ -70,21 +70,29 @@ export class ReservationDetailComponent {
   }
 
   addReservationClasseRow(): void {
-    this.reservationClasses.push(this.createReservationClasseGroup());
+    const firstAvailableClasseId = this.getFirstAvailableClasseId();
+    if (!firstAvailableClasseId) {
+      this.errorMessage.set('Toutes les classes tarifaires sont déjà utilisées dans cette réservation.');
+      return;
+    }
+
+    this.reservationClasses.push(this.createReservationClasseGroup({ idClasseTarifaire: firstAvailableClasseId }));
   }
 
   removeReservationClasseRow(index: number): void {
     this.reservationClasses.removeAt(index);
   }
 
-  isClasseOptionDisabled(rowIndex: number, classeId: number): boolean {
-    return this.reservationClasses.controls.some((control, index) => {
-      if (index === rowIndex) {
-        return false;
+  getAvailableClassesForRow(rowIndex: number): ClasseTarifaire[] {
+    const usedClasseIds = this.getUsedClasseIds(rowIndex);
+    const currentClasseId = this.getSelectedClasseIdByRow(rowIndex);
+
+    return this.classesTarifaires().filter((classe) => {
+      if (classe.id === currentClasseId) {
+        return true;
       }
 
-      const value = control.getRawValue() as { idClasseTarifaire: number | string };
-      return Number(value.idClasseTarifaire) === classeId;
+      return !usedClasseIds.has(classe.id);
     });
   }
 
@@ -98,7 +106,7 @@ export class ReservationDetailComponent {
     const idClasseTarifaire = Number(value.idClasseTarifaire);
     const nbTables = Number(value.nbTables);
 
-    if (idClasseTarifaire <= 0 || nbTables <= 0) {
+    if (idClasseTarifaire <= 0 || nbTables < 0) {
       return null;
     }
 
@@ -129,6 +137,10 @@ export class ReservationDetailComponent {
 
       return total + nbTables;
     }, 0);
+  }
+
+  hasAvailableClasses(): boolean {
+    return this.getFirstAvailableClasseId() > 0;
   }
 
   save(): void {
@@ -256,6 +268,7 @@ export class ReservationDetailComponent {
         if (this.reservationClasses.length === 0) {
           this.addReservationClasseRow();
         }
+        this.ensureClasseSelectionDefaults();
         this.isLoading.set(false);
       },
       error: () => {
@@ -356,5 +369,58 @@ export class ReservationDetailComponent {
       idClasseTarifaire: [initial?.idClasseTarifaire ?? 0, [Validators.required, Validators.min(1)]],
       nbTables: [initial?.nbTables ?? 1, [Validators.required, Validators.min(1)]],
     });
+  }
+
+  private ensureClasseSelectionDefaults(): void {
+    for (let rowIndex = 0; rowIndex < this.reservationClasses.length; rowIndex += 1) {
+      const control = this.reservationClasses.at(rowIndex);
+      if (!control) {
+        continue;
+      }
+
+      const currentValue = Number(control.get('idClasseTarifaire')?.value ?? 0);
+      if (currentValue > 0) {
+        continue;
+      }
+
+      const firstAvailableClasseId = this.getFirstAvailableClasseId(rowIndex);
+      if (firstAvailableClasseId > 0) {
+        control.patchValue({ idClasseTarifaire: firstAvailableClasseId });
+      }
+    }
+  }
+
+  private getFirstAvailableClasseId(rowIndex?: number): number {
+    const usedClasseIds = this.getUsedClasseIds(rowIndex);
+    const firstAvailable = this.classesTarifaires().find((classe) => !usedClasseIds.has(classe.id));
+    return firstAvailable?.id ?? 0;
+  }
+
+  private getUsedClasseIds(excludedRowIndex?: number): Set<number> {
+    const ids = new Set<number>();
+
+    this.reservationClasses.controls.forEach((control, index) => {
+      if (excludedRowIndex !== undefined && index === excludedRowIndex) {
+        return;
+      }
+
+      const value = control.getRawValue() as { idClasseTarifaire: number | string };
+      const idClasseTarifaire = Number(value.idClasseTarifaire);
+      if (idClasseTarifaire > 0) {
+        ids.add(idClasseTarifaire);
+      }
+    });
+
+    return ids;
+  }
+
+  private getSelectedClasseIdByRow(rowIndex: number): number {
+    const control = this.reservationClasses.at(rowIndex);
+    if (!control) {
+      return 0;
+    }
+
+    const value = control.getRawValue() as { idClasseTarifaire: number | string };
+    return Number(value.idClasseTarifaire);
   }
 }

@@ -56,7 +56,7 @@
       <section class="reservation-classes">
         <div class="reservation-classes-header">
           <h4>Classes tarifaires</h4>
-          <button type="button" class="btn-secondary" (click)="addReservationClasse()">Ajouter une classe</button>
+          <button type="button" class="btn-secondary" (click)="addReservationClasse()" [disabled]="!hasAvailableClasses()">Ajouter une classe</button>
         </div>
 
         <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
@@ -71,14 +71,13 @@
               <label>
                 Classe tarifaire
                 <select formControlName="idClasseTarifaire">
-                  <option [ngValue]="0">Sélectionner une classe</option>
-                  @for (classe of classesTarifaires(); track classe.id) {
-                    <option [ngValue]="classe.id" [disabled]="isClasseOptionDisabled($index, classe.id)">
+                  @for (classe of getAvailableClassesForRow($index); track classe.id) {
+                    <option [ngValue]="classe.id">
                       {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
                     </option>
                   }
                 </select>
-              </label>
+              </label>  
 
               <label>
                 Nombre de tables
@@ -86,6 +85,10 @@
               </label>
 
               <button type="button" class="btn-danger" (click)="removeReservationClasse($index)">Supprimer</button>
+
+              @if (getClasseCapacityWarning($index); as warningMessage) {
+                <p class="capacity-warning">{{ warningMessage }}</p>
+              }
             </div>
           }
         </div>

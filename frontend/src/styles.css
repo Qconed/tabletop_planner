@@ -2,6 +2,7 @@
 
 @import './styles/colors.css';
 @import './styles/material-theme.css';
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
 
 * {
   box-sizing: border-box;
@@ -19,19 +20,17 @@ body {
   color: var(--color-text-primary);
 }
 
-.autocomplete-search-panel {
-  --mat-autocomplete-background-color: #ffffff;
-  --mdc-menu-container-color: #ffffff;
-  background: #ffffff !important;
-  opacity: 1 !important;
+.mat-mdc-autocomplete-panel {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: 8px;
 }
 
-.autocomplete-search-panel .mat-mdc-option {
-  background: #ffffff;
+.mat-mdc-option {
+  color: var(--color-text-primary);
 }
 
-.cdk-overlay-pane .autocomplete-search-panel.mat-mdc-autocomplete-panel,
-.cdk-overlay-pane .mat-mdc-autocomplete-panel.autocomplete-search-panel {
-  background: #ffffff !important;
-  opacity: 1 !important;
+.mat-mdc-option:hover {
+  background-color: var(--color-background);
 }
+

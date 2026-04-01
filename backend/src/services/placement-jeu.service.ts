@@ -91,7 +91,10 @@ export const placementJeuService = {
   async update(id: number, data: UpdatePlacementJeuInput) {
     return prisma.placementJeu.update({
       where: { id },
-      data,
+      data: {
+        ...(data.nbTables !== undefined && { nbTables: data.nbTables }),
+        ...(data.quantiteJeu !== undefined && { quantiteJeu: data.quantiteJeu }),
+      },
       include: {
         reservation: true,
         classeTarifaire: true,

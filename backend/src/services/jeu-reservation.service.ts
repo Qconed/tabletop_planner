@@ -57,9 +57,6 @@ export const jeuReservationService = {
   },
 
   async create(data: CreateJeuReservationInput) {
-    // Générer l'idJeuReservation composite
-    const idJeuReservation = `${data.idReservation}-${data.idJeu}`;
-
     return prisma.jeuReservation.create({
       data,
       include: {

@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import {PublicUser,RegisterRequest,AuthResponse,LoginRequest} from '../models/auth.model';
+import { PublicUser, RegisterRequest, AuthResponse, LoginRequest } from '../models/auth.model';
 import { ApiConfigService } from './api-config.service';
 
 
@@ -13,10 +13,12 @@ export class AuthService {
   // Use signal for current user state
   private readonly _currentUser = signal<PublicUser | null>(null);
   private readonly _isAuthenticated = signal<boolean>(false);
-  
+  private readonly _isInitialized = signal<boolean>(false);
+
   // Public read-only signals
   readonly currentUser = this._currentUser.asReadonly();
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
+  readonly isInitialized = this._isInitialized.asReadonly();
 
   constructor(
     private http: HttpClient,
@@ -31,10 +33,12 @@ export class AuthService {
       next: (response) => {
         this._currentUser.set(response.user);
         this._isAuthenticated.set(true);
+        this._isInitialized.set(true);
       },
       error: () => {
         this._currentUser.set(null);
         this._isAuthenticated.set(false);
+        this._isInitialized.set(true);
       }
     });
   }
@@ -83,13 +87,13 @@ export class AuthService {
 
   private handleError(error: any): Observable<never> {
     let errorMessage = 'An unexpected error occurred';
-    
+
     if (error.error && error.error.message) {
       errorMessage = error.error.message;
     } else if (error.message) {
       errorMessage = error.message;
     }
-    
+
     return throwError(() => new Error(errorMessage));
   }
 }

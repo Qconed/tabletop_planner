@@ -11,6 +11,7 @@ import { ClasseTarifaireService } from '../../../../core/services/classe-tarifai
 import { EditeurService } from '../../../../core/services/editeur.service';
 import { ReservationService } from '../../../../core/services/reservation.service';
 import { FestivalWorkspaceStore } from '../../../../core/store/festival-workspace.store';
+import { AuthService } from '../../../../core/services/auth.service';
 import {
   AutocompleteSearchBarComponent,
   AutocompleteSearchOption
@@ -74,7 +75,8 @@ export class ReservationsComponent {
     private readonly editeurService: EditeurService,
     private readonly classeTarifaireService: ClasseTarifaireService,
     private readonly reservationService: ReservationService,
-    private readonly workspaceStore: FestivalWorkspaceStore
+    private readonly workspaceStore: FestivalWorkspaceStore,
+    public readonly authService: AuthService
   ) {
     effect(() => {
       const festivalId = this.workspaceStore.festivalId();

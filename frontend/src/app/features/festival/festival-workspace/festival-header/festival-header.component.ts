@@ -16,7 +16,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class FestivalHeaderComponent {
   constructor(
     public store: FestivalWorkspaceStore,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) { }
 

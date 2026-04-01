@@ -36,7 +36,9 @@
         <h3>Répartition classes tarifaires</h3>
         <div class="classes-header-actions">
           <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
-          <button type="button" class="btn-secondary" (click)="addReservationClasseRow()" [disabled]="!hasAvailableClasses()">Ajouter une classe</button>
+          @if (authService.isAuthenticated()) {
+            <button type="button" class="btn-secondary" (click)="addReservationClasseRow()" [disabled]="!hasAvailableClasses()">Ajouter une classe</button>
+          }
         </div>
 
         <div formArrayName="reservationClasses" class="reservation-classes-list">
@@ -60,7 +62,9 @@
                 <input type="number" min="1" formControlName="nbTables" />
               </label>
 
-              <button type="button" class="btn-danger" (click)="removeReservationClasseRow($index)">Supprimer</button>
+              @if (authService.isAuthenticated()) {
+                <button type="button" class="btn-danger" (click)="removeReservationClasseRow($index)">Supprimer</button>
+              }
 
               @if (getClasseCapacityWarning($index); as warningMessage) {
                 <p class="capacity-warning">{{ warningMessage }}</p>
@@ -74,10 +78,12 @@
         </p>
       </section>
 
-      <div class="actions">
-        <button type="submit" class="btn-primary" [disabled]="isSaving()">Enregistrer</button>
-        <button type="button" class="btn-danger" [disabled]="isSaving()" (click)="deleteReservation()">Supprimer</button>
-      </div>
+      @if (authService.isAuthenticated()) {
+        <div class="actions">
+          <button type="submit" class="btn-primary" [disabled]="isSaving()">Enregistrer</button>
+          <button type="button" class="btn-danger" [disabled]="isSaving()" (click)="deleteReservation()">Supprimer</button>
+        </div>
+      }
     </form>
   }
 </section>

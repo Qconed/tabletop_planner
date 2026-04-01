@@ -10,6 +10,7 @@ import { ClasseTarifaireService } from '../../../../../core/services/classe-tari
 import { ReservationClasseService } from '../../../../../core/services/reservation-classe.service';
 import { ReservationService } from '../../../../../core/services/reservation.service';
 import { FestivalWorkspaceStore } from '../../../../../core/store/festival-workspace.store';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-reservation-detail',
@@ -55,7 +56,8 @@ export class ReservationDetailComponent {
     private readonly classeTarifaireService: ClasseTarifaireService,
     private readonly reservationClasseService: ReservationClasseService,
     private readonly reservationService: ReservationService,
-    private readonly workspaceStore: FestivalWorkspaceStore
+    private readonly workspaceStore: FestivalWorkspaceStore,
+    public readonly authService: AuthService
   ) {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const reservationId = Number(params.get('reservationId'));
@@ -144,6 +146,9 @@ export class ReservationDetailComponent {
   }
 
   save(): void {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
     const reservation = this.reservation();
     if (!reservation) {
       return;
@@ -209,6 +214,9 @@ export class ReservationDetailComponent {
   }
 
   deleteReservation(): void {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
     const reservation = this.reservation();
     const festivalId = this.workspaceStore.festivalId();
 
@@ -270,6 +278,9 @@ export class ReservationDetailComponent {
         }
         this.ensureClasseSelectionDefaults();
         this.isLoading.set(false);
+        if (!this.authService.isAuthenticated()) {
+          this.form.disable();
+        }
       },
       error: () => {
         this.errorMessage.set('Réservation introuvable.');

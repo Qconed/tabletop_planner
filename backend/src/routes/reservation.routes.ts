@@ -12,11 +12,11 @@ export default async function reservationRoutes(fastify: FastifyInstance) {
   fastify.get('/:id', reservationController.getById);
 
   // POST /api/reservations - Crée une nouvelle réservation
-  fastify.post('/', reservationController.create);
+  fastify.post('/', { preHandler: fastify.authenticate }, reservationController.create);
 
   // PUT /api/reservations/:id - Met à jour une réservation
-  fastify.put('/:id', reservationController.update);
+  fastify.put('/:id', { preHandler: fastify.authenticate }, reservationController.update);
 
   // DELETE /api/reservations/:id - Supprime une réservation
-  fastify.delete('/:id', reservationController.delete);
+  fastify.delete('/:id', { preHandler: fastify.authenticate }, reservationController.delete);
 }

@@ -8,6 +8,7 @@ import { FestivalListComponent } from './festival-list/festival-list.component';
 import { FestivalService } from '../../../core/services/festival.service';
 import { Router } from '@angular/router';
 import { Festival } from '../../../core/models/festival.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-festival-manager',
@@ -29,7 +30,8 @@ export class FestivalManagerComponent implements OnInit {
   constructor(
     private dialog: MatDialog,
     private festivalService: FestivalService,
-    private router: Router
+    private router: Router,
+    public authService: AuthService
   ) { }
 
   ngOnInit(): void {

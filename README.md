@@ -9,3 +9,10 @@ A Web app to planning tabletop games festivals.
 
 
 
+
+Launching prod
+
+
+Importing data in prod container
+
+docker exec -it ttp-backend-prod node dist/scripts/migrate-csv-data.js

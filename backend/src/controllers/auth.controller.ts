@@ -1,8 +1,8 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { AuthService } from '../services/auth.service.js';
-import { 
-  registerRequestSchema, 
+import {
+  registerRequestSchema,
   loginRequestSchema,
   authResponseSchema,
   errorResponseSchema,
@@ -28,10 +28,10 @@ export class AuthController {
     try {
       // Validate input with Zod
       const validatedData = registerRequestSchema.parse(request.body);
-      
+
       // Register user via auth service
       const { user, token } = await AuthService.register(validatedData);
-      
+
       // Set HTTP-only cookie
       reply.setCookie('auth_token', token, {
         httpOnly: true,
@@ -40,15 +40,15 @@ export class AuthController {
         maxAge: 24 * 60 * 60, // 24 hours in seconds
         path: '/'
       });
-      
+
       // Validate and return response
       const response = authResponseSchema.parse({
         user,
         message: 'User registered successfully'
       });
-      
+
       return reply.code(201).send(response);
-      
+
     } catch (error: any) {
       return AuthController.handleError(error, reply, 'registration');
     }
@@ -64,10 +64,10 @@ export class AuthController {
     try {
       // Validate input with Zod
       const validatedData = loginRequestSchema.parse(request.body);
-      
+
       // Login user via auth service
       const result = await AuthService.login(validatedData);
-      
+
       if (!result) {
         const errorResponse = errorResponseSchema.parse({
           error: 'Authentication Failed',
@@ -76,9 +76,9 @@ export class AuthController {
         });
         return reply.code(401).send(errorResponse);
       }
-      
+
       const { user, token } = result;
-      
+
       // Set HTTP-only cookie
       reply.setCookie('auth_token', token, {
         httpOnly: true,
@@ -87,15 +87,15 @@ export class AuthController {
         maxAge: 24 * 60 * 60, // 24 hours in seconds
         path: '/'
       });
-      
+
       // Validate and return response
       const response = authResponseSchema.parse({
         user,
         message: 'Login successful'
       });
-      
+
       return reply.send(response);
-      
+
     } catch (error: any) {
       return AuthController.handleError(error, reply, 'login');
     }
@@ -116,14 +116,14 @@ export class AuthController {
         sameSite: 'strict',
         path: '/'
       });
-      
+
       // Validate and return response
       const response = logoutResponseSchema.parse({
         message: 'Logged out successfully'
       });
-      
+
       return reply.send(response);
-      
+
     } catch (error: any) {
       return AuthController.handleError(error, reply, 'logout');
     }
@@ -138,7 +138,7 @@ export class AuthController {
   ): Promise<MeResponse | ErrorResponse> {
     try {
       const userPayload = (request as any).user as JWTPayload;
-      
+
       if (!userPayload) {
         const errorResponse = errorResponseSchema.parse({
           error: 'Authentication Failed',
@@ -147,15 +147,15 @@ export class AuthController {
         });
         return reply.code(401).send(errorResponse);
       }
-      
+
       // Get current user data via auth service
       const user = await AuthService.getCurrentUser(userPayload);
-      
+
       // Validate and return response
       const response = meResponseSchema.parse({ user });
-      
+
       return reply.send(response);
-      
+
     } catch (error: any) {
       return AuthController.handleError(error, reply, 'get current user');
     }
@@ -165,13 +165,13 @@ export class AuthController {
    * Centralized error handling
    */
   private static handleError(
-    error: any, 
-    reply: FastifyReply, 
+    error: any,
+    reply: FastifyReply,
     operation: string
   ): ErrorResponse {
     // Log error for debugging
     console.error(`${operation} error:`, error);
-    
+
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       const errorResponse = errorResponseSchema.parse({
@@ -182,10 +182,10 @@ export class AuthController {
       reply.code(400).send(errorResponse);
       return errorResponse;
     }
-    
+
     // Handle known business logic errors
-    if (error.message.includes('Email already exists') || 
-        error.message.includes('Username already exists')) {
+    if (error.message.includes('Email already exists') ||
+      error.message.includes('Username already exists')) {
       const errorResponse = errorResponseSchema.parse({
         error: 'Conflict',
         message: error.message,
@@ -194,7 +194,7 @@ export class AuthController {
       reply.code(409).send(errorResponse);
       return errorResponse;
     }
-    
+
     if (error.message.includes('Password validation failed')) {
       const errorResponse = errorResponseSchema.parse({
         error: 'Password Validation Error',
@@ -204,7 +204,7 @@ export class AuthController {
       reply.code(400).send(errorResponse);
       return errorResponse;
     }
-    
+
     if (error.message.includes('User not found')) {
       const errorResponse = errorResponseSchema.parse({
         error: 'Not Found',
@@ -214,7 +214,7 @@ export class AuthController {
       reply.code(404).send(errorResponse);
       return errorResponse;
     }
-    
+
     // Handle generic server errors
     const errorResponse = errorResponseSchema.parse({
       error: 'Internal Server Error',

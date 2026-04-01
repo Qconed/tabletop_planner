@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { FestivalService } from '../../../core/services/festival.service';
 import { ClasseTarifaireService } from '../../../core/services/classe-tarifaire.service';
 import { Festival } from '../../../core/models/festival.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { Observable, forkJoin } from 'rxjs';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ClasseTarifaireForm, FestivalFormValue } from './festival-form.types';
@@ -66,7 +67,8 @@ export class FestivalFormComponent implements OnInit {
     private fb: FormBuilder,
     private dialog: MatDialog,
     private festivalService: FestivalService,
-    private classeTarifaireService: ClasseTarifaireService
+    private classeTarifaireService: ClasseTarifaireService,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -102,6 +104,9 @@ export class FestivalFormComponent implements OnInit {
   }
 
   switchToEditMode(): void {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
     this.clearError();
     this.viewMode.set(false);
     this.festivalForm.enable();

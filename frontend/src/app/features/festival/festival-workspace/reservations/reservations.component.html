@@ -12,95 +12,97 @@
     <p class="feedback success">{{ successMessage }}</p>
   }
 
-  <section class="create-section">
-    <h3>Créer une réservation</h3>
+  @if (authService.isAuthenticated()) {
+    <section class="create-section">
+      <h3>Créer une réservation</h3>
 
-    <app-autocomplete-search-bar
-      [label]="'Rechercher un editeur'"
-      [noResultsText]="'Aucun editeur trouve'"
-      [debounceDelay]="350"
-      [fetchOptions]="editeurOptionsProvider"
-      (termSelected)="onEditeurTermSelected($event)"
-      (optionSelected)="onEditeurOptionSelected($event)" />
+      <app-autocomplete-search-bar
+        [label]="'Rechercher un editeur'"
+        [noResultsText]="'Aucun editeur trouve'"
+        [debounceDelay]="350"
+        [fetchOptions]="editeurOptionsProvider"
+        (termSelected)="onEditeurTermSelected($event)"
+        (optionSelected)="onEditeurOptionSelected($event)" />
 
-    @if (selectedEditeur(); as editeur) {
-      <section class="selection-preview">
-        <h4>Editeur sélectionné</h4>
-        <p><strong>{{ editeur.libelle }}</strong></p>
-        <p>Expose des jeux: {{ editeur.exposeJeux ? 'Oui' : 'Non' }}</p>
-      </section>
-    }
+      @if (selectedEditeur(); as editeur) {
+        <section class="selection-preview">
+          <h4>Editeur sélectionné</h4>
+          <p><strong>{{ editeur.libelle }}</strong></p>
+          <p>Expose des jeux: {{ editeur.exposeJeux ? 'Oui' : 'Non' }}</p>
+        </section>
+      }
 
-    @if (!selectedEditeur() && selectedEditeurTerm(); as term) {
-      <section class="selection-preview">
-        <h4>Terme saisi</h4>
-        <p><strong>{{ term }}</strong></p>
-      </section>
-    }
+      @if (!selectedEditeur() && selectedEditeurTerm(); as term) {
+        <section class="selection-preview">
+          <h4>Terme saisi</h4>
+          <p><strong>{{ term }}</strong></p>
+        </section>
+      }
 
-    <form class="reservation-form" [formGroup]="createForm" (ngSubmit)="createReservation()">
-      <label>
-        Statut
-        <select formControlName="statut">
-          @for (statut of statuts; track statut) {
-            <option [value]="statut">{{ formatStatut(statut) }}</option>
+      <form class="reservation-form" [formGroup]="createForm" (ngSubmit)="createReservation()">
+        <label>
+          Statut
+          <select formControlName="statut">
+            @for (statut of statuts; track statut) {
+              <option [value]="statut">{{ formatStatut(statut) }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Notes
+          <textarea formControlName="notesResa" rows="3" placeholder="Notes optionnelles"></textarea>
+        </label>
+
+        <section class="reservation-classes">
+          <div class="reservation-classes-header">
+            <h4>Classes tarifaires</h4>
+            <button type="button" class="btn-secondary" (click)="addReservationClasse()" [disabled]="!hasAvailableClasses()">Ajouter une classe</button>
+          </div>
+
+          <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
+
+          @if (classesTarifaires().length === 0) {
+            <p class="hint">Aucune classe tarifaire disponible pour ce festival.</p>
           }
-        </select>
-      </label>
 
-      <label>
-        Notes
-        <textarea formControlName="notesResa" rows="3" placeholder="Notes optionnelles"></textarea>
-      </label>
+          <div formArrayName="reservationClasses" class="reservation-classes-list">
+            @for (group of reservationClasses.controls; track $index) {
+              <div class="reservation-class-row" [formGroupName]="$index">
+                <label>
+                  Classe tarifaire
+                  <select formControlName="idClasseTarifaire">
+                    @for (classe of getAvailableClassesForRow($index); track classe.id) {
+                      <option [ngValue]="classe.id">
+                        {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
+                      </option>
+                    }
+                  </select>
+                </label>  
 
-      <section class="reservation-classes">
-        <div class="reservation-classes-header">
-          <h4>Classes tarifaires</h4>
-          <button type="button" class="btn-secondary" (click)="addReservationClasse()" [disabled]="!hasAvailableClasses()">Ajouter une classe</button>
-        </div>
+                <label>
+                  Nombre de tables
+                  <input type="number" min="1" formControlName="nbTables" />
+                </label>
 
-        <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
+                <button type="button" class="btn-danger" (click)="removeReservationClasse($index)">Supprimer</button>
 
-        @if (classesTarifaires().length === 0) {
-          <p class="hint">Aucune classe tarifaire disponible pour ce festival.</p>
-        }
+                @if (getClasseCapacityWarning($index); as warningMessage) {
+                  <p class="capacity-warning">{{ warningMessage }}</p>
+                }
+              </div>
+            }
+          </div>
+        </section>
 
-        <div formArrayName="reservationClasses" class="reservation-classes-list">
-          @for (group of reservationClasses.controls; track $index) {
-            <div class="reservation-class-row" [formGroupName]="$index">
-              <label>
-                Classe tarifaire
-                <select formControlName="idClasseTarifaire">
-                  @for (classe of getAvailableClassesForRow($index); track classe.id) {
-                    <option [ngValue]="classe.id">
-                      {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
-                    </option>
-                  }
-                </select>
-              </label>  
+        <p class="total-tables-display">
+          Total des tables sélectionnées: <strong>{{ getSelectedTablesTotal() }}</strong>
+        </p>
 
-              <label>
-                Nombre de tables
-                <input type="number" min="1" formControlName="nbTables" />
-              </label>
-
-              <button type="button" class="btn-danger" (click)="removeReservationClasse($index)">Supprimer</button>
-
-              @if (getClasseCapacityWarning($index); as warningMessage) {
-                <p class="capacity-warning">{{ warningMessage }}</p>
-              }
-            </div>
-          }
-        </div>
-      </section>
-
-      <p class="total-tables-display">
-        Total des tables sélectionnées: <strong>{{ getSelectedTablesTotal() }}</strong>
-      </p>
-
-      <button type="submit" class="btn-primary" [disabled]="isSubmitting() || isLoading()">Créer la réservation</button>
-    </form>
-  </section>
+        <button type="submit" class="btn-primary" [disabled]="isSubmitting() || isLoading()">Créer la réservation</button>
+      </form>
+    </section>
+  }
 
   <section class="reservations-list-section">
     <h3>Réservations existantes</h3>

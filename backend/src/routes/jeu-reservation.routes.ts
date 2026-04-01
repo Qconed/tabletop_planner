@@ -9,11 +9,11 @@ export default async function jeuReservationRoutes(fastify: FastifyInstance) {
   fastify.get('/:idReservation/:idJeu', jeuReservationController.getById);
 
   // POST /api/jeux-reservations - Crée une nouvelle réservation de jeu
-  fastify.post('/', jeuReservationController.create);
+  fastify.post('/', { preHandler: fastify.authenticate }, jeuReservationController.create);
 
   // PUT /api/jeux-reservations/:idReservation/:idJeu - Met à jour une réservation de jeu
-  fastify.put('/:idReservation/:idJeu', jeuReservationController.update);
+  fastify.put('/:idReservation/:idJeu', { preHandler: fastify.authenticate }, jeuReservationController.update);
 
   // DELETE /api/jeux-reservations/:idReservation/:idJeu - Supprime une réservation de jeu
-  fastify.delete('/:idReservation/:idJeu', jeuReservationController.delete);
+  fastify.delete('/:idReservation/:idJeu', { preHandler: fastify.authenticate }, jeuReservationController.delete);
 }

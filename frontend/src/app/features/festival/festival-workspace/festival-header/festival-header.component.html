@@ -9,13 +9,21 @@
     </div>
     
     <div class="header-right">
-    <button mat-button [routerLink]="['/festivals', store.festivalId(), 'reservations']">
+      <button mat-button [routerLink]="['/festivals', store.festivalId(), 'reservations']">
         <mat-icon>table_restaurant</mat-icon>
         <span class="btn-text">Réservations</span>
-    </button>
-    <button mat-button color="warn" (click)="onLogout()">
-        <mat-icon>logout</mat-icon>
-        <span class="btn-text">Se déconnecter</span>
-    </button>
+      </button>
+      
+      @if (authService.isAuthenticated()) {
+        <button mat-button color="warn" (click)="onLogout()">
+          <mat-icon>logout</mat-icon>
+          <span class="btn-text">Se déconnecter</span>
+        </button>
+      } @else {
+        <button mat-button color="primary" routerLink="/">
+          <mat-icon>login</mat-icon>
+          <span class="btn-text">Se connecter</span>
+        </button>
+      }
     </div>
 </header>

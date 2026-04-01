@@ -9,11 +9,11 @@ export default async function classeTarifaireRoutes(fastify: FastifyInstance) {
   fastify.get('/:id', classeTarifaireController.getById);
 
   // POST /api/classes-tarifaires - Crée une nouvelle classe tarifaire
-  fastify.post('/', classeTarifaireController.create);
+  fastify.post('/', { preHandler: fastify.authenticate }, classeTarifaireController.create);
 
   // PUT /api/classes-tarifaires/:id - Met à jour une classe tarifaire
-  fastify.put('/:id', classeTarifaireController.update);
+  fastify.put('/:id', { preHandler: fastify.authenticate }, classeTarifaireController.update);
 
   // DELETE /api/classes-tarifaires/:id - Supprime une classe tarifaire
-  fastify.delete('/:id', classeTarifaireController.delete);
+  fastify.delete('/:id', { preHandler: fastify.authenticate }, classeTarifaireController.delete);
 }

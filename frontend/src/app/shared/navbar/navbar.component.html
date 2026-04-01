@@ -5,7 +5,11 @@
     </h1>
     <div class="navbar-links">
       <a routerLink="/festivals" routerLinkActive="active" class="nav-link">Festivals</a>
-      <button class="btn-login" (click)="onLoginClick()">Se connecter</button>
+      @if (authService.isAuthenticated()) {
+        <button class="btn-login logout" (click)="onLogoutClick()">Se déconnecter</button>
+      } @else {
+        <button class="btn-login" (click)="onLoginClick()">Se connecter</button>
+      }
     </div>
   </div>
 </nav>

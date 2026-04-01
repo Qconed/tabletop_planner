@@ -11,10 +11,16 @@ import { ReservationClasseService } from '../../../../../core/services/reservati
 import { ReservationService } from '../../../../../core/services/reservation.service';
 import { FestivalWorkspaceStore } from '../../../../../core/store/festival-workspace.store';
 import { AuthService } from '../../../../../core/services/auth.service';
+import {
+  AutocompleteSearchBarComponent,
+  AutocompleteSearchOption
+} from '../../../../../shared/components/autocomplete-search-bar/autocomplete-search-bar.component';
+import { JeuService } from '../../../../../core/services/jeu.service';
+import { Jeu } from '../../../../../core/models/jeu.model';
 
 @Component({
   selector: 'app-reservation-detail',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, AutocompleteSearchBarComponent],
   templateUrl: './reservation-detail.component.html',
   styleUrl: './reservation-detail.component.css'
 })
@@ -28,6 +34,20 @@ export class ReservationDetailComponent {
   readonly isSaving = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+  readonly selectedJeu = signal<Jeu | null>(null);
+
+  readonly jeuOptionsProvider = (search?: string) =>
+    this.jeuService.searchByName(search).pipe(
+      map((jeux) =>
+        jeux.map(
+          (jeu): AutocompleteSearchOption<number, Jeu> => ({
+            label: jeu.libelle,
+            value: jeu.id,
+            meta: jeu
+          })
+        )
+      )
+    );
 
   readonly statuts: readonly StatutWorkflow[] = [
     'PAS_DE_CONTACT',
@@ -56,6 +76,7 @@ export class ReservationDetailComponent {
     private readonly classeTarifaireService: ClasseTarifaireService,
     private readonly reservationClasseService: ReservationClasseService,
     private readonly reservationService: ReservationService,
+    private readonly jeuService: JeuService,
     private readonly workspaceStore: FestivalWorkspaceStore,
     public readonly authService: AuthService
   ) {
@@ -256,6 +277,11 @@ export class ReservationDetailComponent {
 
   formatStatut(statut: StatutWorkflow): string {
     return statut.replaceAll('_', ' ');
+  }
+
+  onJeuOptionSelected(option: AutocompleteSearchOption): void {
+    const jeu = option.meta as Jeu | undefined;
+    this.selectedJeu.set(jeu ?? null);
   }
 
   private loadReservation(reservationId: number): void {

@@ -32,6 +32,30 @@
         <textarea rows="4" formControlName="notesResa"></textarea>
       </label>
 
+      <section class="games-search-section">
+        <h3>Rechercher un jeu</h3>
+        <app-autocomplete-search-bar
+          label="Rechercher un jeu (pour information)"
+          [fetchOptions]="jeuOptionsProvider"
+          (optionSelected)="onJeuOptionSelected($event)"
+        ></app-autocomplete-search-bar>
+
+        @if (selectedJeu(); as jeu) {
+          <div class="selected-jeu-info">
+            <p><strong>Jeu sélectionné :</strong> {{ jeu.libelle }}</p>
+            @if (jeu.auteur) {
+              <p><strong>Auteur :</strong> {{ jeu.auteur }}</p>
+            }
+            @if (jeu.description) {
+              <p class="description">{{ jeu.description }}</p>
+            }
+            @if (jeu.imageJeu) {
+              <img [src]="jeu.imageJeu" [alt]="jeu.libelle" class="jeu-thumbnail" />
+            }
+          </div>
+        }
+      </section>
+
       <section class="classes-section">
         <h3>Répartition classes tarifaires</h3>
         <div class="classes-header-actions">

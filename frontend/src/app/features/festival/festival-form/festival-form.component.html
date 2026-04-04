@@ -55,11 +55,11 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Date du festival</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="date" [min]="minDate">
+          <mat-label>Date du festival (JJ/MM/AAAA)</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="date" [min]="minDate" [errorStateMatcher]="matcher">
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
-          @if (festivalForm.get('date')?.invalid && festivalForm.get('date')?.touched) {
+          @if (festivalForm.get('date')?.invalid) {
             <mat-error>{{ dateError }}</mat-error>
           }
         </mat-form-field>

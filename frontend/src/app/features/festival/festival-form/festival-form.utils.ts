@@ -106,7 +106,15 @@ export function extractApiErrorMessage(err: unknown): string {
 }
 
 function toIsoDate(date: Date | string): string {
-  return date instanceof Date ? date.toISOString() : date;
+  if (!(date instanceof Date)) {
+    const parsed = new Date(date);
+    if (isNaN(parsed.getTime())) return date;
+    date = parsed;
+  }
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function toCents(value: number): number {

@@ -9,6 +9,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, NativeDateAdapter } from '@angular/material/core';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { FestivalService } from '../../../core/services/festival.service';
 import { ClasseTarifaireService } from '../../../core/services/classe-tarifaire.service';
 import { Festival } from '../../../core/models/festival.model';
@@ -31,6 +33,61 @@ import {
   validateClassesTarifairesBeforeSubmit
 } from './festival-form.utils';
 
+export const MY_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'DD/MM/YYYY',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
+
+/**
+ * Custom DateAdapter using standard Date but supporting DD/MM/YYYY format string.
+ */
+export class CustomDateAdapter extends NativeDateAdapter {
+  override parse(value: any): Date | null {
+    if (typeof value === 'string' && value.indexOf('/') > -1) {
+      const str = value.split('/');
+      const year = Number(str[2]);
+      const month = Number(str[1]) - 1;
+      const date = Number(str[0]);
+      return new Date(year, month, date);
+    }
+    const timestamp = typeof value === 'number' ? value : Date.parse(value);
+    return isNaN(timestamp) ? null : new Date(timestamp);
+  }
+
+  override format(date: Date, displayFormat: any): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const monthShort = date.toLocaleString('default', { month: 'short' });
+    const monthLong = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+
+    if (displayFormat === 'DD/MM/YYYY') {
+      return `${day}/${month}/${year}`;
+    }
+    if (displayFormat === 'MMM YYYY') {
+      return `${monthShort} ${year}`;
+    }
+    if (displayFormat === 'MMMM YYYY') {
+      return `${monthLong} ${year}`;
+    }
+    return super.format(date, displayFormat);
+  }
+}
+
+/** ErrorStateMatcher to show errors as soon as the control is invalid */
+export class ImmediateErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: any | null): boolean {
+    return !!(control && control.invalid);
+  }
+}
+
 @Component({
   selector: 'app-festival-form',
   standalone: true,
@@ -44,6 +101,11 @@ import {
     MatNativeDateModule,
     MatIconModule,
     MatCardModule
+  ],
+  providers: [
+    { provide: DateAdapter, useClass: CustomDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
+    { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' }
   ],
   templateUrl: './festival-form.component.html',
   styleUrls: ['./festival-form.component.css']
@@ -60,6 +122,7 @@ export class FestivalFormComponent implements OnInit {
   isSubmitting = false;
   errorMessage = signal<string>('');
   minDate = new Date();
+  matcher = new ImmediateErrorStateMatcher();
   private removedClasseTarifaireIds = new Set<number>();
   private initialPersistedClassesTarifairesCount = 0;
 
@@ -429,7 +492,10 @@ export class FestivalFormComponent implements OnInit {
   get dateError(): string {
     const control = this.festivalForm.get('date');
     if (control?.hasError('required')) return 'La date est requise';
-    return '';
+    if (control?.hasError('matDatepickerParse')) return 'Format invalide (JJ/MM/AAAA)';
+    if (control?.hasError('matDatepickerMin')) return 'La date ne peut pas être dans le passé';
+    if (control?.hasError('matDatepickerMax')) return 'Date trop lointaine';
+    return 'Date invalide';
   }
 
   getClasseTarifaireLibelleError(index: number): string {

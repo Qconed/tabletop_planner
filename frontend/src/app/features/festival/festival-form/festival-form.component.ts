@@ -1,4 +1,6 @@
-import { Component, OnInit, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, signal, computed, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { startWith } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -125,6 +127,10 @@ export class FestivalFormComponent implements OnInit {
   matcher = new ImmediateErrorStateMatcher();
   private removedClasseTarifaireIds = new Set<number>();
   private initialPersistedClassesTarifairesCount = 0;
+  
+  // Signal providing a live sum of tables/chairs from all tariff classes
+  totalChairs!: Signal<number>;
+  private classesTarifairesSignal!: Signal<ClasseTarifaireForm[]>;
 
   constructor(
     private fb: FormBuilder,
@@ -132,11 +138,22 @@ export class FestivalFormComponent implements OnInit {
     private festivalService: FestivalService,
     private classeTarifaireService: ClasseTarifaireService,
     public authService: AuthService
-  ) {}
+  ) {
+    this.initForm();
+    
+    // Initialize signals after form is ready
+    this.classesTarifairesSignal = toSignal(
+      this.classesTarifaires.valueChanges.pipe(startWith(this.classesTarifaires.value)),
+      { initialValue: [] as ClasseTarifaireForm[] }
+    );
+    
+    this.totalChairs = computed(() => {
+      const classes = this.classesTarifairesSignal() || [];
+      return classes.reduce((sum: number, c: ClasseTarifaireForm) => sum + (c.nbTotalTables || 0), 0);
+    });
+  }
 
   ngOnInit(): void {
-    this.initForm();
-
     if (this.festivalId) {
       this.viewMode.set(true);
       this.loadFestivalData(this.festivalId);
@@ -178,10 +195,6 @@ export class FestivalFormComponent implements OnInit {
   private initForm(): void {
     this.festivalForm = this.fb.group({
       nom: ['', [Validators.required, Validators.minLength(MIN_FESTIVAL_NAME_LENGTH)]],
-      nombre_tables: [
-        null,
-        [Validators.required, Validators.min(1)]
-      ],
       date: [null, [Validators.required]],
       classesTarifaires: this.fb.array([])
     });
@@ -481,13 +494,6 @@ export class FestivalFormComponent implements OnInit {
     return '';
   }
 
-  get nombreTablesError(): string {
-    const control = this.festivalForm.get('nombre_tables');
-    if (control?.hasError('required')) return 'Le nombre de tables est requis';
-    if (control?.hasError('min')) return 'Le nombre de tables doit être au moins 1';
-    if (control?.hasError('max')) return 'Le nombre de tables ne peut pas dépasser 1000';
-    return '';
-  }
 
   get dateError(): string {
     const control = this.festivalForm.get('date');

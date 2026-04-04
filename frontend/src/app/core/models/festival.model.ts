@@ -22,7 +22,7 @@ export interface FestivalCreateClasseTarifaireDto {
 export interface FestivalCreateDto {
   nom: string;
   date: Date | string;
-  nbTotalTables: number;
+  nbTotalTables?: number;
   classesTarifaires: FestivalCreateClasseTarifaireDto[];
 }
 

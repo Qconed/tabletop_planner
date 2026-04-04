@@ -14,10 +14,9 @@ interface ClasseTarifaireSubmitValidationInput {
   persistedCount: number;
 }
 
-export function mapFestivalToFormValue(festival: Festival): { nom: string; nombre_tables: number; date: Date } {
+export function mapFestivalToFormValue(festival: Festival): { nom: string; date: Date } {
   return {
     nom: festival.nom,
-    nombre_tables: festival.nbTotalTables,
     date: new Date(festival.date)
   };
 }
@@ -39,16 +38,14 @@ export function mapClasseTarifaireToFormValue(classe: {
 export function buildFestivalUpdateDto(formValue: FestivalFormValue): FestivalUpdateDto {
   return {
     nom: formValue.nom,
-    nbTotalTables: formValue.nombre_tables,
-    date: toIsoDate(formValue.date)
+    date: new Date(formValue.date).toISOString()
   };
 }
 
 export function buildFestivalCreateDto(formValue: FestivalFormValue): FestivalCreateDto {
   return {
     nom: formValue.nom,
-    nbTotalTables: formValue.nombre_tables,
-    date: toIsoDate(formValue.date),
+    date: new Date(formValue.date).toISOString(),
     classesTarifaires: formValue.classesTarifaires.map((classe) => ({
       libelle: classe.libelle,
       prixTable: toCents(classe.prixTable),

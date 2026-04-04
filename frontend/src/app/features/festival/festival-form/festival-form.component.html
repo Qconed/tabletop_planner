@@ -47,14 +47,6 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nombre de tables</mat-label>
-          <input matInput type="number" formControlName="nombre_tables" placeholder="Ex: 50">
-          @if (festivalForm.get('nombre_tables')?.invalid && festivalForm.get('nombre_tables')?.touched) {
-            <mat-error>{{ nombreTablesError }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Date du festival (JJ/MM/AAAA)</mat-label>
           <input matInput [matDatepicker]="picker" formControlName="date" [min]="minDate" [errorStateMatcher]="matcher">
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
@@ -75,6 +67,12 @@
               Ajouter une classe
             </button>
           }
+        </div>
+
+        <div class="total-chairs-banner">
+          <mat-icon color="primary">event_seat</mat-icon>
+          <span class="total-chairs-label">Nombre total de tables :</span>
+          <span class="total-chairs-value">{{ totalChairs() }}</span>
         </div>
 
         @if (classesTarifaires.length === 0) {

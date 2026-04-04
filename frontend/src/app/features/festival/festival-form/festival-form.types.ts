@@ -7,7 +7,6 @@ export interface ClasseTarifaireForm {
 
 export interface FestivalFormValue {
   nom: string;
-  nombre_tables: number;
   date: Date | string;
   classesTarifaires: ClasseTarifaireForm[];
 }

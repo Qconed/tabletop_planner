@@ -1,0 +1,120 @@
+<div class="reservation-form-container">
+  <div class="modal-header">
+    <h2 mat-dialog-title>Créer une réservation</h2>
+    <p>Sélectionnez un éditeur et configurez ses classes tarifaires.</p>
+  </div>
+
+  <mat-dialog-content class="mat-typography">
+    <section class="form-section">
+      <h3>Éditeur</h3>
+      <app-autocomplete-search-bar
+        [label]="'Rechercher un editeur'"
+        [noResultsText]="'Aucun editeur trouve'"
+        [debounceDelay]="350"
+        [fetchOptions]="editeurOptionsProvider"
+        (termSelected)="onEditeurTermSelected($event)"
+        (optionSelected)="onEditeurOptionSelected($event)" />
+
+      @if (selectedEditeur(); as editeur) {
+        <section class="selection-preview">
+          <h4>Editeur sélectionné</h4>
+          <p><strong>{{ editeur.libelle }}</strong></p>
+          <p>Expose des jeux: {{ editeur.exposeJeux ? 'Oui' : 'Non' }}</p>
+        </section>
+      }
+
+      @if (!selectedEditeur() && selectedEditeurTerm(); as term) {
+        <section class="selection-preview">
+          <h4>Terme saisi</h4>
+          <p><strong>{{ term }}</strong></p>
+        </section>
+      }
+    </section>
+
+    <form class="reservation-form" [formGroup]="createForm">
+      <section class="form-section">
+        <h3>Informations générales</h3>
+        <div class="form-grid">
+          <label>
+            Statut
+            <select formControlName="statut">
+              @for (statut of statuts; track statut) {
+                <option [value]="statut">{{ formatStatut(statut) }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Notes
+            <textarea formControlName="notesResa" rows="3" placeholder="Notes optionnelles"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-header">
+          <h3>Classes tarifaires</h3>
+          <button type="button" class="btn-secondary" (click)="addReservationClasse()" [disabled]="!hasAvailableClasses()">
+            <mat-icon>add</mat-icon>
+            Ajouter une classe
+          </button>
+        </div>
+
+        <p class="hint">Au moins une classe tarifaire est obligatoire.</p>
+
+        @if (classesTarifaires().length === 0) {
+          <p class="hint">Aucune classe tarifaire disponible pour ce festival.</p>
+        }
+
+        <div formArrayName="reservationClasses" class="reservation-classes-list">
+          @for (group of reservationClasses.controls; track $index) {
+            <div class="reservation-class-row" [formGroupName]="$index">
+              <label>
+                Classe tarifaire
+                <select formControlName="idClasseTarifaire">
+                  @for (classe of getAvailableClassesForRow($index); track classe.id) {
+                    <option [ngValue]="classe.id">
+                      {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
+                    </option>
+                  }
+                </select>
+              </label>  
+
+              <label>
+                Nombre de tables
+                <input type="number" min="1" formControlName="nbTables" />
+              </label>
+
+              <button type="button" class="btn-danger" (click)="removeReservationClasse($index)">
+                <mat-icon>delete</mat-icon>
+              </button>
+
+              @if (getClasseCapacityWarning($index); as warningMessage) {
+                <p class="capacity-warning">{{ warningMessage }}</p>
+              }
+            </div>
+          }
+        </div>
+
+        <p class="total-tables-display">
+          Total des tables sélectionnées: <strong>{{ getSelectedTablesTotal() }}</strong>
+        </p>
+      </section>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    @if (errorMessage(); as errorMessage) {
+      <p class="feedback error">{{ errorMessage }}</p>
+    }
+
+    <button mat-button (click)="onCancel()" [disabled]="isSubmitting()">Annuler</button>
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="isSubmitting() || isLoading()">
+      @if (isSubmitting()) {
+        Création...
+      } @else {
+        Créer la réservation
+      }
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, Optional, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ClasseTarifaire } from '../../../../../core/models/classe-tarifaire.model';
 import { Reservation, ReservationClasse, StatutWorkflow } from '../../../../../core/models/reservation.model';
@@ -20,11 +22,19 @@ import { Jeu } from '../../../../../core/models/jeu.model';
 
 @Component({
   selector: 'app-reservation-detail',
-  imports: [CommonModule, ReactiveFormsModule, AutocompleteSearchBarComponent],
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    AutocompleteSearchBarComponent,
+    MatDialogModule,
+    MatButtonModule,
+    MatIconModule
+  ],
   templateUrl: './reservation-detail.component.html',
   styleUrl: './reservation-detail.component.css'
 })
-export class ReservationDetailComponent {
+export class ReservationDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
 
@@ -32,6 +42,7 @@ export class ReservationDetailComponent {
   readonly classesTarifaires = signal<ClasseTarifaire[]>([]);
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
+  readonly isEditMode = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly selectedJeu = signal<Jeu | null>(null);
@@ -71,25 +82,34 @@ export class ReservationDetailComponent {
   }
 
   constructor(
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
+    @Optional() @Inject(MAT_DIALOG_DATA) public data: { reservationId: number },
+    @Optional() private readonly dialogRef: MatDialogRef<ReservationDetailComponent>,
     private readonly classeTarifaireService: ClasseTarifaireService,
     private readonly reservationClasseService: ReservationClasseService,
     private readonly reservationService: ReservationService,
     private readonly jeuService: JeuService,
     private readonly workspaceStore: FestivalWorkspaceStore,
     public readonly authService: AuthService
-  ) {
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const reservationId = Number(params.get('reservationId'));
-      if (!Number.isFinite(reservationId) || reservationId <= 0) {
-        this.errorMessage.set('Identifiant de réservation invalide.');
-        this.isLoading.set(false);
-        return;
-      }
+  ) {}
 
-      this.loadReservation(reservationId);
-    });
+  ngOnInit(): void {
+    const reservationId = this.data?.reservationId;
+    if (!Number.isFinite(reservationId) || reservationId <= 0) {
+      this.errorMessage.set('Identifiant de réservation invalide.');
+      this.isLoading.set(false);
+      return;
+    }
+
+    this.loadReservation(reservationId);
+  }
+
+  toggleEditMode(): void {
+    this.isEditMode.set(!this.isEditMode());
+    if (this.isEditMode()) {
+      this.form.enable();
+    } else {
+      this.form.disable();
+    }
   }
 
   addReservationClasseRow(): void {
@@ -225,6 +245,12 @@ export class ReservationDetailComponent {
         this.setReservationInForm(updatedReservation);
         this.successMessage.set('Réservation mise à jour.');
         this.isSaving.set(false);
+        this.isEditMode.set(false);
+        this.form.disable();
+        // If it's a dialog, close it and return true to indicate success
+        if (this.dialogRef) {
+          this.dialogRef.close(true);
+        }
       },
       error: (error) => {
         const zodDetails = error?.error?.details?.[0]?.message as string | undefined;
@@ -239,9 +265,8 @@ export class ReservationDetailComponent {
       return;
     }
     const reservation = this.reservation();
-    const festivalId = this.workspaceStore.festivalId();
 
-    if (!reservation || !festivalId) {
+    if (!reservation) {
       return;
     }
 
@@ -256,7 +281,9 @@ export class ReservationDetailComponent {
 
     this.reservationService.delete(reservation.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.router.navigate(['/festivals', festivalId, 'reservations']);
+        if (this.dialogRef) {
+          this.dialogRef.close(true);
+        }
       },
       error: (error) => {
         this.errorMessage.set(error?.error?.error ?? 'Impossible de supprimer la réservation.');
@@ -265,14 +292,10 @@ export class ReservationDetailComponent {
     });
   }
 
-  backToList(): void {
-    const festivalId = this.workspaceStore.festivalId();
-    if (!festivalId) {
-      this.router.navigate(['/festivals']);
-      return;
+  close(): void {
+    if (this.dialogRef) {
+      this.dialogRef.close();
     }
-
-    this.router.navigate(['/festivals', festivalId, 'reservations']);
   }
 
   formatStatut(statut: StatutWorkflow): string {
@@ -304,9 +327,9 @@ export class ReservationDetailComponent {
         }
         this.ensureClasseSelectionDefaults();
         this.isLoading.set(false);
-        if (!this.authService.isAuthenticated()) {
-          this.form.disable();
-        }
+        // By default read-only and disable form
+        this.isEditMode.set(false);
+        this.form.disable();
       },
       error: () => {
         this.errorMessage.set('Réservation introuvable.');

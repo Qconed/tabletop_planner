@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
+import { ReservationDetailComponent } from './reservation-detail/reservation-detail.component';
 
 @Component({
   selector: 'app-reservations',
@@ -20,7 +21,8 @@ import { ReservationFormComponent } from './reservation-form/reservation-form.co
     ReactiveFormsModule,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    ReservationDetailComponent
   ],
   templateUrl: './reservations.component.html',
   styleUrl: './reservations.component.css'
@@ -80,12 +82,22 @@ export class ReservationsComponent {
   }
 
   openReservationDetail(reservationId: number): void {
-    const festivalId = this.workspaceStore.festivalId();
-    if (!festivalId) {
-      return;
-    }
+    const dialogRef = this.dialog.open(ReservationDetailComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { reservationId },
+      disableClose: false
+    });
 
-    this.router.navigate(['/festivals', festivalId, 'reservations', reservationId]);
+    dialogRef.afterClosed().subscribe((shouldRefresh) => {
+      if (shouldRefresh) {
+        const festivalId = this.workspaceStore.festivalId();
+        if (festivalId) {
+          this.loadReservations(festivalId);
+        }
+      }
+    });
   }
 
   formatStatut(statut: StatutWorkflow): string {

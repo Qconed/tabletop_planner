@@ -28,8 +28,8 @@
         <table class="reservations-table">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Éditeur</th>
+              <th>Classes</th>
               <th>Tables totales</th>
               <th>Statut</th>
             </tr>
@@ -37,8 +37,8 @@
           <tbody>
             @for (reservation of reservations(); track reservation.id) {
               <tr (click)="openReservationDetail(reservation.id)">
-                <td>{{ reservation.id }}</td>
                 <td>{{ reservation.editeur?.libelle || 'Éditeur inconnu' }}</td>
+                <td>{{ reservation._count?.reservationClasses || 0 }}</td>
                 <td>{{ reservation.nbTablesResa }}</td>
                 <td>
                   <span class="statut-badge" [attr.data-statut]="reservation.statut">

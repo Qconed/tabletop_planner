@@ -110,9 +110,9 @@
                       </td>
                       <td>
                         @if (isEditMode()) {
-                          <select [value]="row.pj?.idClasseTarifaire || 0" (change)="onGameClassChange(row.jr, +$any($event.target).value, row.pj)">
+                          <select [ngModel]="row.pj?.idClasseTarifaire || 0" [ngModelOptions]="{standalone: true}" (ngModelChange)="onGameClassChange(row.jr, +$event, row.pj)">
                             <option [value]="0">Non placé</option>
-                            @for (rc of currentReservationClasses; track rc.idClasseTarifaire) {
+                            @for (rc of currentReservationClasses(); track rc.idClasseTarifaire) {
                               <option [value]="rc.idClasseTarifaire">{{ rc.libelle }}</option>
                             }
                           </select>

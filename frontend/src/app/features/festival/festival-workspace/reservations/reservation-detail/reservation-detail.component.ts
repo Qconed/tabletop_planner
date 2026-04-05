@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Inject, OnInit, Optional, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,6 +29,7 @@ import { Jeu } from '../../../../../core/models/jeu.model';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     AutocompleteSearchBarComponent,
     MatDialogModule,
@@ -58,6 +59,7 @@ export class ReservationDetailComponent implements OnInit {
     jr: JeuReservation,
     pj?: PlacementJeu
   }>>([]);
+  readonly currentReservationClasses = signal<Array<{ idClasseTarifaire: number, libelle: string }>>([]);
 
   readonly jeuOptionsProvider = (search?: string) =>
     this.jeuService.searchByName(search).pipe(
@@ -89,15 +91,14 @@ export class ReservationDetailComponent implements OnInit {
     reservationClasses: this.fb.array([]),
   });
 
-  get reservationClasses(): FormArray {
-    return this.form.get('reservationClasses') as FormArray;
-  }
-
-  get currentReservationClasses(): Array<{ idClasseTarifaire: number, libelle: string }> {
+  private updateCurrentReservationClasses(): void {
     const res = this.reservation();
-    if (!res) return [];
-    
-    return this.reservationClasses.controls.map(control => {
+    if (!res) {
+      this.currentReservationClasses.set([]);
+      return;
+    }
+
+    const classes = this.reservationClasses.controls.map(control => {
       const id = Number(control.get('idClasseTarifaire')?.value);
       const classe = this.classesTarifaires().find(c => c.id === id);
       return {
@@ -105,6 +106,8 @@ export class ReservationDetailComponent implements OnInit {
         libelle: classe?.libelle || `Classe #${id}`
       };
     }).filter(c => c.idClasseTarifaire > 0);
+    
+    this.currentReservationClasses.set(classes);
   }
 
   constructor(
@@ -118,7 +121,16 @@ export class ReservationDetailComponent implements OnInit {
     private readonly placementJeuService: PlacementJeuService,
     private readonly workspaceStore: FestivalWorkspaceStore,
     public readonly authService: AuthService
-  ) {}
+  ) {
+    // Sync currentReservationClasses whenever the FormArray value changes
+    this.form.get('reservationClasses')?.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => this.updateCurrentReservationClasses());
+  }
+
+  get reservationClasses(): FormArray {
+    return this.form.get('reservationClasses') as FormArray;
+  }
 
   ngOnInit(): void {
     const reservationId = this.data?.reservationId;
@@ -148,10 +160,12 @@ export class ReservationDetailComponent implements OnInit {
     }
 
     this.reservationClasses.push(this.createReservationClasseGroup({ idClasseTarifaire: firstAvailableClasseId }));
+    this.updateCurrentReservationClasses();
   }
 
   removeReservationClasseRow(index: number): void {
     this.reservationClasses.removeAt(index);
+    this.updateCurrentReservationClasses();
   }
 
   getAvailableClassesForRow(rowIndex: number): ClasseTarifaire[] {
@@ -429,7 +443,9 @@ export class ReservationDetailComponent implements OnInit {
     if (!res) return;
     this.reservationService.getById(res.id).subscribe({
       next: (updated) => {
-        this.setReservationInForm(updated);
+        // If we are in edit mode, we only update game-related signals
+        // to avoid resetting the FormArray which might contain unsaved rows
+        this.setReservationInForm(updated, this.isEditMode());
         this.isSaving.set(false);
       },
       error: () => this.isSaving.set(false)
@@ -528,22 +544,24 @@ export class ReservationDetailComponent implements OnInit {
     return forkJoin(operations);
   }
 
-  private setReservationInForm(reservation: Reservation): void {
+  private setReservationInForm(reservation: Reservation, onlyUpdateGames: boolean = false): void {
     this.reservation.set(reservation);
 
-    this.form.patchValue({
-      statut: reservation.statut,
-      notesResa: reservation.notesResa ?? '',
-    });
+    if (!onlyUpdateGames) {
+      this.form.patchValue({
+        statut: reservation.statut,
+        notesResa: reservation.notesResa ?? '',
+      });
 
-    this.reservationClasses.clear();
-    const reservationClasses = reservation.reservationClasses ?? [];
-    for (const reservationClasse of reservationClasses) {
-      this.reservationClasses.push(this.createReservationClasseGroup({
-        id: reservationClasse.id,
-        idClasseTarifaire: reservationClasse.idClasseTarifaire,
-        nbTables: reservationClasse.nbTables,
-      }));
+      this.reservationClasses.clear();
+      const reservationClasses = reservation.reservationClasses ?? [];
+      for (const reservationClasse of reservationClasses) {
+        this.reservationClasses.push(this.createReservationClasseGroup({
+          id: reservationClasse.id,
+          idClasseTarifaire: reservationClasse.idClasseTarifaire,
+          nbTables: reservationClasse.nbTables,
+        }));
+      }
     }
 
     const allJr = reservation.jeuxReservations || [];
@@ -559,9 +577,10 @@ export class ReservationDetailComponent implements OnInit {
 
     const games = allJr.map(jr => ({
       jr,
-      pj: allPj.find(pj => pj.idJeu === jr.idJeu)
+      pj: allPj.find(pj => Number(pj.idJeu) === Number(jr.idJeu))
     }));
     this.allGames.set(games);
+    this.updateCurrentReservationClasses();
   }
 
   getTablesUsedInClass(idClasseTarifaire: number): number {

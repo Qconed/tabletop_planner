@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { FestivalFormComponent } from './festival-form/festival-form.component';
+import { FestivalFormComponent } from '../festival-form/festival-form.component';
 import { FestivalListComponent } from './festival-list/festival-list.component';
-import { FestivalService } from '../../core/services/festival.service';
-import { Festival } from '../../core/models/festival.model';
+import { FestivalService } from '../../../core/services/festival.service';
+import { Router } from '@angular/router';
+import { Festival } from '../../../core/models/festival.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-festival-manager',
@@ -27,8 +29,10 @@ export class FestivalManagerComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
-    private festivalService: FestivalService
-  ) {}
+    private festivalService: FestivalService,
+    private router: Router,
+    public authService: AuthService
+  ) { }
 
   ngOnInit(): void {
     this.loadFestivals();
@@ -68,30 +72,6 @@ export class FestivalManagerComponent implements OnInit {
   }
 
   openFestivalDetailsDialog(festivalId: number): void {
-    const dialogRef = this.dialog.open(FestivalFormComponent, {
-      width: '900px',
-      maxWidth: '95vw',
-      maxHeight: '90vh',
-      disableClose: false
-    });
-
-    // Pass the festival ID to the component
-    dialogRef.componentInstance.festivalId = festivalId;
-
-    dialogRef.componentInstance.formSubmitted.subscribe(() => {
-      dialogRef.close();
-      this.loadFestivals();
-      console.log('Festival mis à jour avec succès');
-    });
-
-    dialogRef.componentInstance.festivalDeleted.subscribe(() => {
-      dialogRef.close();
-      this.loadFestivals();
-      console.log('Festival supprimé avec succès');
-    });
-
-    dialogRef.componentInstance.formCancelled.subscribe(() => {
-      dialogRef.close();
-    });
+    this.router.navigate(['/festivals', festivalId]);
   }
 }

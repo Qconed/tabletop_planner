@@ -3,7 +3,7 @@ import { env, serverConfig } from './config/index.js';
 
 async function buildFastify() {
   const fastify = Fastify({
-    logger: serverConfig.logger 
+    logger: serverConfig.logger
   });
 
   // Register basic plugins
@@ -22,7 +22,7 @@ async function buildFastify() {
 
   // Register routes
   await fastify.register(import('./routes/auth.routes.js'), { prefix: '/api/auth' });
-  
+
   // Register festival management routes
   await fastify.register(import('./routes/festival.routes.js'), { prefix: '/api/festivals' });
   await fastify.register(import('./routes/editeur.routes.js'), { prefix: '/api/editeurs' });
@@ -35,19 +35,19 @@ async function buildFastify() {
 
   // Health check route
   fastify.get('/health', async (_request, _reply) => {
-    return { 
-      status: 'ok', 
+    return {
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV 
+      environment: env.NODE_ENV
     };
   });
 
   // Main route
   fastify.get('/', async (_request, _reply) => {
-    return { 
+    return {
       message: 'Fastify server is running!',
       version: '1.0.0',
-      environment: env.NODE_ENV 
+      environment: env.NODE_ENV
     };
   });
 
@@ -58,10 +58,10 @@ async function buildFastify() {
 const start = async () => {
   try {
     const fastify = await buildFastify();
-    
-    await fastify.listen({ 
-      port: env.PORT, 
-      host: env.HOST 
+
+    await fastify.listen({
+      port: env.PORT,
+      host: env.HOST
     });
     console.log(`Server is running on ${env.HOST}:${env.PORT} in ${env.NODE_ENV} mode`);
   } catch (err) {

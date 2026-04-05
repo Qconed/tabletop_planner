@@ -1,6 +1,7 @@
 import { Component, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { RegisterRequest } from '../../../core/models/auth.model';
 import { Router } from '@angular/router';
 
@@ -14,13 +15,15 @@ export class RegisterComponent {
   registerForm: FormGroup;
   isLoading = signal(false);
   errorMessage = signal<string>('');
+  successMessage = signal<string>('');
   
   switchToLogin = output<void>();
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private authModal: AuthModalService
   ) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
@@ -52,8 +55,13 @@ export class RegisterComponent {
       this.authService.register(userData).subscribe({
         next: (response) => {
           this.isLoading.set(false);
+          this.successMessage.set('Inscription réussie !');
           console.log('Registration successful:', response.message);
-          this.router.navigate(['/']);
+          
+          setTimeout(() => {
+            this.authModal.close();
+            this.router.navigate(['/festivals']);
+          }, 1500);
         },
         error: (error) => {
           this.isLoading.set(false);

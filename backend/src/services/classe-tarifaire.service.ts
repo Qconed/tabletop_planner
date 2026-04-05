@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import type { CreateClasseTarifaireInput, UpdateClasseTarifaireInput, ClasseTarifaireQueryInput } from '../schemas/classe-tarifaire.schemas.js';
+import { recomputeFestivalTotalTables } from './festival.service.js';
 
 const prisma = new PrismaClient();
 
@@ -67,32 +68,40 @@ export const classeTarifaireService = {
   },
 
   async create(data: CreateClasseTarifaireInput) {
-    return prisma.classeTarifaire.create({
-      data,
-      include: {
-        festival: true,
-      },
+    return prisma.$transaction(async (tx: any) => {
+      const result = await tx.classeTarifaire.create({
+        data,
+        include: {
+          festival: true,
+        },
+      });
+      await recomputeFestivalTotalTables(tx, data.idFestival);
+      return result;
     });
   },
 
   async update(id: number, data: UpdateClasseTarifaireInput) {
-    const updateData = {
-      ...(data.libelle !== undefined && { libelle: data.libelle }),
-      ...(data.prixTable !== undefined && { prixTable: data.prixTable }),
-      ...(data.nbTotalTables !== undefined && { nbTotalTables: data.nbTotalTables }),
-    };
+    return prisma.$transaction(async (tx: any) => {
+      const updateData = {
+        ...(data.libelle !== undefined && { libelle: data.libelle }),
+        ...(data.prixTable !== undefined && { prixTable: data.prixTable }),
+        ...(data.nbTotalTables !== undefined && { nbTotalTables: data.nbTotalTables }),
+      };
 
-    return prisma.classeTarifaire.update({
-      where: { id },
-      data: updateData,
-      include: {
-        festival: true,
-      },
+      const result = await tx.classeTarifaire.update({
+        where: { id },
+        data: updateData,
+        include: {
+          festival: true,
+        },
+      });
+      await recomputeFestivalTotalTables(tx, result.idFestival);
+      return result;
     });
   },
 
   async delete(id: number) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       const classeTarifaire = await tx.classeTarifaire.findUnique({
         where: { id },
         select: {
@@ -116,9 +125,11 @@ export const classeTarifaireService = {
         throw createLastClasseTarifaireDeleteError();
       }
 
-      return tx.classeTarifaire.delete({
+      const result = await tx.classeTarifaire.delete({
         where: { id },
       });
+      await recomputeFestivalTotalTables(tx, classeTarifaire.idFestival);
+      return result;
     });
   },
 };

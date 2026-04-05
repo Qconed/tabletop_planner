@@ -1,0 +1,127 @@
+.reservations-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.page-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--color-text-primary);
+}
+
+.page-header p {
+  margin: var(--spacing-xs) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.feedback {
+  margin: 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.feedback.error {
+  color: #8a1f11;
+  background: #fde9e7;
+  border: 1px solid #f3b8b1;
+}
+
+.reservations-list-section {
+  background: white;
+  border: 1px solid color-mix(in srgb, var(--color-border) 78%, white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.reservations-table-wrapper {
+  overflow-x: auto;
+}
+
+.reservations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reservations-table th {
+  text-align: left;
+  padding: var(--spacing-md) var(--spacing-sm);
+  border-bottom: 2px solid var(--color-border);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.reservations-table td {
+  padding: var(--spacing-md) var(--spacing-sm);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 84%, white);
+  color: var(--color-text-primary);
+}
+
+.reservations-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reservations-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-primary) 5%, white);
+}
+
+.statut-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.statut-badge[data-statut="PRESENT"],
+.statut-badge[data-statut="FACTURE_PAYEE"] {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statut-badge[data-statut="CONTACT_PRIS"],
+.statut-badge[data-statut="DISCUSSION_EN_COURS"] {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.statut-badge[data-statut="FACTURE"] {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.statut-badge[data-statut="SERA_ABSENT"],
+.statut-badge[data-statut="CONSIDERE_ABSENT"] {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 600px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

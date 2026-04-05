@@ -12,18 +12,17 @@
       }
     </mat-card-title>
     <div class="header-actions">
-      @if (isEditMode && !isViewMode) {
+      @if (isEditMode && !isViewMode && authService.isAuthenticated()) {
         <button
           mat-icon-button
-          color="warn"
-          (click)="confirmDeleteFestival()"
-          class="delete-festival-button"
+          (click)="onCancel()"
+          class="cancel-button"
           [disabled]="isSubmitting"
-          aria-label="Supprimer le festival">
-          <mat-icon>delete</mat-icon>
+          aria-label="Annuler les modifications">
+          <mat-icon>close</mat-icon>
         </button>
       }
-      @if (isEditMode && isViewMode) {
+      @if (isEditMode && isViewMode && authService.isAuthenticated()) {
         <button mat-icon-button color="primary" (click)="switchToEditMode()" class="edit-button" aria-label="Modifier le festival">
           <mat-icon>edit</mat-icon>
         </button>
@@ -47,19 +46,11 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nombre de tables</mat-label>
-          <input matInput type="number" formControlName="nombre_tables" placeholder="Ex: 50">
-          @if (festivalForm.get('nombre_tables')?.invalid && festivalForm.get('nombre_tables')?.touched) {
-            <mat-error>{{ nombreTablesError }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Date du festival</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="date" [min]="minDate">
+          <mat-label>Date du festival (JJ/MM/AAAA)</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="date" [min]="minDate" [errorStateMatcher]="matcher">
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
-          @if (festivalForm.get('date')?.invalid && festivalForm.get('date')?.touched) {
+          @if (festivalForm.get('date')?.invalid) {
             <mat-error>{{ dateError }}</mat-error>
           }
         </mat-form-field>
@@ -75,6 +66,12 @@
               Ajouter une classe
             </button>
           }
+        </div>
+
+        <div class="total-chairs-banner">
+          <mat-icon color="primary">event_seat</mat-icon>
+          <span class="total-chairs-label">Nombre total de tables :</span>
+          <span class="total-chairs-value">{{ totalChairs() }}</span>
         </div>
 
         @if (classesTarifaires.length === 0) {
@@ -137,14 +134,23 @@
 
       <!-- Actions -->
       <div class="form-actions">
-        <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
-          @if (isViewMode) {
-            Fermer
-          } @else {
-            Annuler
-          }
-        </button>
+        @if (isEditMode && !isViewMode && authService.isAuthenticated()) {
+          <button
+            type="button"
+            mat-icon-button
+            color="warn"
+            (click)="confirmDeleteFestival()"
+            class="delete-festival-button"
+            [disabled]="isSubmitting"
+            aria-label="Supprimer le festival">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+        <div class="spacer"></div>
         @if (!isViewMode) {
+          <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
+              Annuler
+          </button>
           <button type="submit" mat-raised-button color="primary" [disabled]="isSubmitting">
             @if (isSubmitting) {
               Enregistrement...

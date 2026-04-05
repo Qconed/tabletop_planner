@@ -1,0 +1,227 @@
+<div class="reservation-detail-container">
+  <div class="modal-header">
+    <div class="header-title-group">
+      <h2 mat-dialog-title>
+        @if (reservation(); as res) {
+          Réservation de {{ res.editeur?.libelle || 'Éditeur inconnu' }}
+        } @else {
+          Détails de la réservation
+        }
+      </h2>
+      @if (authService.isAuthenticated() && reservation(); as res) {
+        <span class="statut-badge" [attr.data-statut]="res.statut">
+          {{ formatStatut(res.statut) }}
+        </span>
+      }
+    </div>
+    <button mat-icon-button (click)="close()" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  @if (errorMessage(); as errorMessage) {
+    <p class="feedback error">{{ errorMessage }}</p>
+  }
+
+  @if (successMessage(); as successMessage) {
+    <p class="feedback success">{{ successMessage }}</p>
+  }
+
+  <mat-dialog-content class="mat-typography">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <p>Chargement des détails...</p>
+      </div>
+    } @else if (reservation(); as reservation) {
+      <form class="detail-form" [formGroup]="form">
+        <section class="info-section">
+          <div class="section-header">
+            <h3>Informations générales</h3>
+            @if (authService.isAuthenticated() && !isEditMode()) {
+              <button type="button" mat-stroked-button color="primary" (click)="toggleEditMode()">
+                <mat-icon>edit</mat-icon>
+                Modifier
+              </button>
+            }
+          </div>
+
+          @if (authService.isAuthenticated()) {
+            <div class="form-grid">
+              <label>
+                Statut
+                <select formControlName="statut">
+                  @for (statut of statuts; track statut) {
+                    <option [value]="statut">{{ formatStatut(statut) }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                Notes
+                <textarea rows="3" formControlName="notesResa" placeholder="Aucune note"></textarea>
+              </label>
+            </div>
+          } @else {
+            <p class="no-access-message">Vous n'avez pas les permissions pour consulter les détails internes cette réservation.</p>
+          }
+        </section>
+
+        @if (isEditMode() || (reservation.jeuxReservations && reservation.jeuxReservations.length > 0)) {
+          <section class="games-management-section">
+            <div class="section-header">
+              <h3>Gestion des jeux</h3>
+              <div class="capacity-summary">
+                @for (rc of reservation.reservationClasses; track rc.idClasseTarifaire) {
+                  <span class="usage-badge" [class.over-capacity]="getTablesUsedInClass(rc.idClasseTarifaire) > rc.nbTables">
+                    {{ rc.classeTarifaire?.libelle }}: {{ getTablesUsedInClass(rc.idClasseTarifaire) }}/{{ rc.nbTables }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            @if (isEditMode()) {
+              <div class="search-box">
+                <app-autocomplete-search-bar
+                  label="Rechercher un jeu à ajouter"
+                  [fetchOptions]="jeuOptionsProvider"
+                  (optionSelected)="onJeuOptionSelected($event)"
+                ></app-autocomplete-search-bar>
+              </div>
+            }
+
+            <div class="table-responsive">
+              <table class="games-table">
+                <thead>
+                  <tr>
+                    <th>Jeu</th>
+                    <th>Classe Tarifaire</th>
+                    <th>Nb Tables</th>
+                    <th>Quantité</th>
+                    @if (isEditMode()) {
+                      <th>Actions</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of allGames(); track row.jr.idJeu) {
+                    <tr>
+                      <td class="game-name-cell">
+                        <strong>{{ row.jr.jeu?.libelle }}</strong>
+                      </td>
+                      <td>
+                        @if (isEditMode()) {
+                          <select [ngModel]="row.pj?.idClasseTarifaire || 0" [ngModelOptions]="{standalone: true}" (ngModelChange)="onGameClassChange(row.jr, +$event, row.pj)">
+                            <option [value]="0">Non placé</option>
+                            @for (rc of currentReservationClasses(); track rc.idClasseTarifaire) {
+                              <option [value]="rc.idClasseTarifaire">{{ rc.libelle }}</option>
+                            }
+                          </select>
+                        } @else {
+                          {{ row.pj?.classeTarifaire?.libelle || 'Non placé' }}
+                        }
+                      </td>
+                      <td>
+                        @if (isEditMode() && row.pj) {
+                          <input type="number" min="1" [value]="row.pj.nbTables" (change)="updateGameTables(row.pj, +$any($event.target).value)" class="small-input" />
+                        } @else {
+                          {{ row.pj?.nbTables || '-' }}
+                        }
+                      </td>
+                      <td>
+                        @if (isEditMode()) {
+                          <input type="number" min="1" [value]="row.jr.quantite" (change)="updateGameQuantity(row.jr, +$any($event.target).value)" class="small-input" />
+                        } @else {
+                          {{ row.jr.quantite }}
+                        }
+                      </td>
+                      @if (isEditMode()) {
+                        <td>
+                          <button type="button" class="btn-danger-icon" (click)="deleteGameFromReservation(row.jr)" title="Supprimer">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                  @if (allGames().length === 0) {
+                    <tr>
+                      <td colspan="5" class="empty-cell">Aucun jeu ajouté à cette réservation</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        <section class="classes-section">
+          <div class="section-header">
+            <h3>Répartition classes tarifaires</h3>
+            @if (isEditMode() && hasAvailableClasses()) {
+              <button type="button" class="btn-secondary" (click)="addReservationClasseRow()">
+                <mat-icon>add</mat-icon>
+                Ajouter une classe
+              </button>
+            }
+          </div>
+
+          <p class="total-tables-badge">
+            {{ getSelectedTablesTotal() }} tables au total
+          </p>
+
+          <div formArrayName="reservationClasses" class="reservation-classes-list">
+            @for (group of reservationClasses.controls; track $index) {
+              <div class="reservation-class-row" [formGroupName]="$index">
+                <input type="hidden" formControlName="id" />
+
+                <label>
+                  Classe tarifaire
+                  <select formControlName="idClasseTarifaire">
+                    @for (classe of getAvailableClassesForRow($index); track classe.id) {
+                      <option [ngValue]="classe.id">
+                        {{ classe.libelle }} (capacité {{ classe.nbTotalTables }})
+                      </option>
+                    }
+                  </select>
+                </label>
+
+                <label>
+                  Nombre de tables
+                  <input type="number" min="1" formControlName="nbTables" />
+                </label>
+
+                @if (isEditMode() && reservationClasses.length > 1) {
+                  <button type="button" class="btn-danger-icon" (click)="removeReservationClasseRow($index)" title="Supprimer">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+
+                @if (getClasseCapacityWarning($index); as warningMessage) {
+                  <p class="capacity-warning">{{ warningMessage }}</p>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      </form>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    @if (isEditMode()) {
+      <button mat-button (click)="toggleEditMode()" [disabled]="isSaving()">Annuler</button>
+      <button mat-raised-button color="primary" (click)="save()" [disabled]="isSaving() || form.invalid">
+        <mat-icon>save</mat-icon>
+        Enregistrer
+      </button>
+    } @else {
+      @if (authService.isAuthenticated()) {
+        <button mat-button color="warn" (click)="deleteReservation()" [disabled]="isSaving()">
+          <mat-icon>delete</mat-icon>
+          Supprimer
+        </button>
+      }
+    }
+  </mat-dialog-actions>
+</div>
+

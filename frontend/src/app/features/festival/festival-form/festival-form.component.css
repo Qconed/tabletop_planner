@@ -24,6 +24,20 @@ mat-card-header {
 
 .delete-festival-button {
   margin-left: 0;
+  color: var(--color-error);
+  background: transparent !important;
+}
+
+.delete-festival-button:hover {
+  background-color: rgba(231, 76, 60, 0.08) !important;
+}
+
+.cancel-button {
+  color: var(--color-text-secondary);
+}
+
+.cancel-button:hover {
+  color: var(--color-error);
 }
 
 .festival-form {
@@ -56,6 +70,29 @@ mat-card-header {
 
 .full-width {
   width: 100%;
+}
+
+.total-chairs-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  background: var(--color-background-alt);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--color-primary);
+  font-weight: 500;
+}
+
+.total-chairs-label {
+  color: var(--color-text-secondary);
+}
+
+.total-chairs-value {
+  color: var(--color-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-left: 4px;
 }
 
 /* Classes tarifaires */
@@ -96,6 +133,12 @@ mat-card-header {
 
 .remove-btn {
   margin-top: 4px;
+  color: var(--color-error);
+  background: transparent !important;
+}
+
+.remove-btn:hover {
+  background-color: rgba(231, 76, 60, 0.08) !important;
 }
 
 .empty-message {
@@ -132,14 +175,18 @@ mat-card-header {
 /* Actions */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: var(--spacing-md);
   padding-top: var(--spacing-xl);
   border-top: 1px solid var(--color-border);
   margin-top: var(--spacing-md);
 }
 
-.form-actions button {
+.form-actions .spacer {
+  flex: 1;
+}
+
+.form-actions button:not(.delete-festival-button) {
   min-width: 120px;
 }
 
@@ -171,10 +218,20 @@ mat-card-header {
 
   .form-actions {
     flex-direction: column-reverse;
+    gap: var(--spacing-sm);
+  }
+
+  .form-actions .spacer {
+    display: none;
   }
 
   .form-actions button {
     width: 100%;
+    margin: 0;
+  }
+
+  .form-actions .delete-festival-button {
+    margin-top: var(--spacing-md);
   }
 }
 

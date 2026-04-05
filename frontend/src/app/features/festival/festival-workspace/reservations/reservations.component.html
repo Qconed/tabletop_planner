@@ -1,0 +1,61 @@
+<section class="reservations-page">
+  <header class="page-header">
+    <div class="header-content">
+      <div>
+        <h2>Reservations</h2>
+        <p>Gérez les réservations des éditeurs pour ce festival.</p>
+      </div>
+      @if (authService.isAuthenticated()) {
+        <button mat-raised-button color="primary" (click)="openCreateReservationDialog()">
+          <mat-icon>add</mat-icon>
+          Nouvelle réservation
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (errorMessage(); as errorMessage) {
+    <p class="feedback error">{{ errorMessage }}</p>
+  }
+
+  <section class="reservations-list-section">
+    @if (isLoading()) {
+      <p>Chargement...</p>
+    } @else if (reservations().length === 0) {
+      <p>Aucune réservation pour ce festival.</p>
+    } @else {
+      <div class="reservations-table-wrapper">
+        <table class="reservations-table">
+          <thead>
+            <tr>
+              <th>Éditeur</th>
+              <th>Classes</th>
+              <th>Jeux</th>
+              <th>Tables totales</th>
+              @if (authService.isAuthenticated()) {
+                <th>Statut</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (reservation of reservations(); track reservation.id) {
+              <tr (click)="openReservationDetail(reservation.id)">
+                <td>{{ reservation.editeur?.libelle || 'Éditeur inconnu' }}</td>
+                <td>{{ reservation._count?.reservationClasses || 0 }}</td>
+                <td>{{ reservation._count?.jeuxReservations || 0 }}</td>
+                <td>{{ reservation.nbTablesResa }}</td>
+                @if (authService.isAuthenticated()) {
+                  <td>
+                    <span class="statut-badge" [attr.data-statut]="reservation.statut">
+                      {{ formatStatut(reservation.statut) }}
+                    </span>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>

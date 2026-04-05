@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export const festivalService = {
   async getAll() {
     return prisma.festival.findMany({
-      orderBy: { date: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: {
         _count: {
           select: {
@@ -38,11 +38,13 @@ export const festivalService = {
   },
 
   async create(data: CreateFestivalInput) {
+    const totalTables = data.classesTarifaires.reduce((sum, classe) => sum + classe.nbTotalTables, 0);
+    
     return prisma.$transaction(async (tx) => {
       return tx.festival.create({
         data: {
           nom: data.nom,
-          nbTotalTables: data.nbTotalTables,
+          nbTotalTables: totalTables,
           date: new Date(data.date),
           classesTarifaires: {
             create: data.classesTarifaires.map((classeTarifaire) => ({
@@ -69,7 +71,6 @@ export const festivalService = {
       where: { id },
       data: {
         ...(data.nom !== undefined && { nom: data.nom }),
-        ...(data.nbTotalTables !== undefined && { nbTotalTables: data.nbTotalTables }),
         ...(data.date !== undefined && { date: new Date(data.date) }),
       },
     });
@@ -81,3 +82,15 @@ export const festivalService = {
     });
   },
 };
+
+export async function recomputeFestivalTotalTables(tx: any, festivalId: number) {
+  const result = await tx.classeTarifaire.aggregate({
+    where: { idFestival: festivalId },
+    _sum: { nbTotalTables: true }
+  });
+  const total = result._sum.nbTotalTables || 0;
+  await tx.festival.update({
+    where: { id: festivalId },
+    data: { nbTotalTables: total }
+  });
+}

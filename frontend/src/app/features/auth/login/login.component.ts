@@ -1,6 +1,7 @@
 import { Component, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService} from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { LoginRequest } from '../../../core/models/auth.model';
 import { Router } from '@angular/router';
 
@@ -14,13 +15,15 @@ export class LoginComponent {
   loginForm: FormGroup;
   isLoading = signal(false);
   errorMessage = signal<string>('');
+  successMessage = signal<string>('');
   
   switchToRegister = output<void>();
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private authModal: AuthModalService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -38,8 +41,13 @@ export class LoginComponent {
       this.authService.login(loginData).subscribe({
         next: (response) => {
           this.isLoading.set(false);
+          this.successMessage.set('Connexion réussie !');
           console.log('Login successful:', response.message);
-          this.router.navigate(['/dashboard']);
+          
+          setTimeout(() => {
+            this.authModal.close();
+            this.router.navigate(['/festivals']);
+          }, 1500);
         },
         error: (error) => {
           this.isLoading.set(false);

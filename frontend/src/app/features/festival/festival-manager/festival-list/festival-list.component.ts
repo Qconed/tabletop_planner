@@ -2,7 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { Festival } from '../../../core/models/festival.model';
+import { Festival } from '../../../../core/models/festival.model';
 
 @Component({
   selector: 'app-festival-list',

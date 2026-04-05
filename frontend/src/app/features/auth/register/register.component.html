@@ -4,6 +4,10 @@
   @if (errorMessage()) {
     <div class="error-message">{{ errorMessage() }}</div>
   }
+
+  @if (successMessage()) {
+    <div class="success-message">{{ successMessage() }}</div>
+  }
   
   <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
     <div class="form-group">

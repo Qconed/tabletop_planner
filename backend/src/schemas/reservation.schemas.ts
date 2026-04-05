@@ -15,15 +15,56 @@ export const statutWorkflowEnum = z.enum([
   'FACTURE_PAYEE',
 ]);
 
+const reservationClasseCreateInReservationSchema = z.object({
+  idClasseTarifaire: z.number().int().positive(),
+  nbTables: z.number().int().positive('Le nombre de tables doit être positif'),
+});
+
 export const createReservationSchema = z.object({
   idEditeur: z.number().int().positive(),
   idFestival: z.number().int().positive(),
   notesResa: z.string().optional(),
   nbTablesResa: z.number().int().positive('Le nombre de tables doit être positif'),
   statut: statutWorkflowEnum.default('PAS_DE_CONTACT'),
+  reservationClasses: z.array(reservationClasseCreateInReservationSchema).optional(),
+}).superRefine((data, ctx) => {
+  if (!data.reservationClasses || data.reservationClasses.length === 0) {
+    return;
+  }
+
+  const seenClasseIds = new Set<number>();
+  let totalTablesByClasse = 0;
+
+  data.reservationClasses.forEach((reservationClasse, index) => {
+    if (seenClasseIds.has(reservationClasse.idClasseTarifaire)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Une classe tarifaire ne peut être sélectionnée qu\'une seule fois',
+        path: ['reservationClasses', index, 'idClasseTarifaire'],
+      });
+      return;
+    }
+
+    seenClasseIds.add(reservationClasse.idClasseTarifaire);
+    totalTablesByClasse += reservationClasse.nbTables;
+  });
+
+  if (totalTablesByClasse > data.nbTablesResa) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'La somme des tables par classe ne peut pas dépasser nbTablesResa',
+      path: ['reservationClasses'],
+    });
+  }
 });
 
-export const updateReservationSchema = createReservationSchema.partial();
+export const updateReservationSchema = z.object({
+  idEditeur: z.number().int().positive().optional(),
+  idFestival: z.number().int().positive().optional(),
+  notesResa: z.string().optional(),
+  nbTablesResa: z.number().int().positive('Le nombre de tables doit être positif').optional(),
+  statut: statutWorkflowEnum.optional(),
+});
 
 export const reservationIdSchema = z.object({
   id: z.string().regex(/^\d+$/).transform(Number),

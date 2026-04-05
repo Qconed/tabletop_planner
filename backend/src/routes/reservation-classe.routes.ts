@@ -9,11 +9,11 @@ export default async function reservationClasseRoutes(fastify: FastifyInstance) 
   fastify.get('/:id', reservationClasseController.getById);
 
   // POST /api/reservations-classes - Crée une nouvelle réservation de classe
-  fastify.post('/', reservationClasseController.create);
+  fastify.post('/', { preHandler: fastify.authenticate }, reservationClasseController.create);
 
   // PUT /api/reservations-classes/:id - Met à jour une réservation de classe
-  fastify.put('/:id', reservationClasseController.update);
+  fastify.put('/:id', { preHandler: fastify.authenticate }, reservationClasseController.update);
 
   // DELETE /api/reservations-classes/:id - Supprime une réservation de classe
-  fastify.delete('/:id', reservationClasseController.delete);
+  fastify.delete('/:id', { preHandler: fastify.authenticate }, reservationClasseController.delete);
 }

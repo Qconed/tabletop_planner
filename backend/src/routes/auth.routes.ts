@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { AuthController } from '../controllers/auth.controller.js';
-import { 
+import {
   fastifySchemas,
   type RegisterRequest,
   type LoginRequest,

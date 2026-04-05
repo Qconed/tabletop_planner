@@ -14,10 +14,9 @@ interface ClasseTarifaireSubmitValidationInput {
   persistedCount: number;
 }
 
-export function mapFestivalToFormValue(festival: Festival): { nom: string; nombre_tables: number; date: Date } {
+export function mapFestivalToFormValue(festival: Festival): { nom: string; date: Date } {
   return {
     nom: festival.nom,
-    nombre_tables: festival.nbTotalTables,
     date: new Date(festival.date)
   };
 }
@@ -39,16 +38,14 @@ export function mapClasseTarifaireToFormValue(classe: {
 export function buildFestivalUpdateDto(formValue: FestivalFormValue): FestivalUpdateDto {
   return {
     nom: formValue.nom,
-    nbTotalTables: formValue.nombre_tables,
-    date: toIsoDate(formValue.date)
+    date: new Date(formValue.date).toISOString()
   };
 }
 
 export function buildFestivalCreateDto(formValue: FestivalFormValue): FestivalCreateDto {
   return {
     nom: formValue.nom,
-    nbTotalTables: formValue.nombre_tables,
-    date: toIsoDate(formValue.date),
+    date: new Date(formValue.date).toISOString(),
     classesTarifaires: formValue.classesTarifaires.map((classe) => ({
       libelle: classe.libelle,
       prixTable: toCents(classe.prixTable),
@@ -106,7 +103,15 @@ export function extractApiErrorMessage(err: unknown): string {
 }
 
 function toIsoDate(date: Date | string): string {
-  return date instanceof Date ? date.toISOString() : date;
+  if (!(date instanceof Date)) {
+    const parsed = new Date(date);
+    if (isNaN(parsed.getTime())) return date;
+    date = parsed;
+  }
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function toCents(value: number): number {

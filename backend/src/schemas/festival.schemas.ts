@@ -12,7 +12,6 @@ const createFestivalClasseTarifaireSchema = z.object({
 
 export const createFestivalSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis').max(255),
-  nbTotalTables: z.number().int().positive('Le nombre de tables doit être positif'),
   date: z.string().datetime().or(z.date()),
   classesTarifaires: z.array(createFestivalClasseTarifaireSchema)
     .min(1, 'Au moins une classe tarifaire est requise')
@@ -27,7 +26,6 @@ export const createFestivalSchema = z.object({
 
 export const updateFestivalSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis').max(255).optional(),
-  nbTotalTables: z.number().int().positive('Le nombre de tables doit être positif').optional(),
   date: z.string().datetime().or(z.date()).optional(),
 });
 

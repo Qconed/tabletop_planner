@@ -123,11 +123,6 @@
   box-shadow: none !important;
 }
 
-/* S'assurer que le dialog ne soit pas affecté par les styles d'overlay globaux */
-.cdk-overlay-pane {
-  z-index: 1100 !important; /* Plus haut que l'overlay custom (1000) */
-}
-
 .cdk-overlay-backdrop {
   background-color: rgba(0, 0, 0, 0.5) !important;
 }

@@ -9,7 +9,8 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    component: LandingComponent
+    redirectTo: 'festivals',
+    pathMatch: 'full'
   },
   {
     path: 'festivals',

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export const festivalService = {
   async getAll() {
     return prisma.festival.findMany({
-      orderBy: { date: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: {
         _count: {
           select: {

@@ -2,6 +2,6 @@
     @if (store.isLoading()) {
     <div class="loading">Chargement...</div>
     } @else if (store.festivalId()) {
-    <app-festival-form [festivalId]="store.festivalId()" />
+    <app-festival-form [festivalId]="store.festivalId()" (festivalDeleted)="onFestivalDeleted()" />
     }
 </div>

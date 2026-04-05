@@ -215,7 +215,6 @@
         Enregistrer
       </button>
     } @else {
-      <button mat-button (click)="close()">Fermer</button>
       @if (authService.isAuthenticated()) {
         <button mat-button color="warn" (click)="deleteReservation()" [disabled]="isSaving()">
           <mat-icon>delete</mat-icon>

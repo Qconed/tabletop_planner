@@ -411,6 +411,8 @@ export class FestivalFormComponent implements OnInit {
         console.log('✅ Toutes les classes tarifaires ont été traitées:', results);
         this.removedClasseTarifaireIds.clear();
         this.stopSubmitting();
+        this.viewMode.set(true);
+        this.festivalForm.disable();
         this.formSubmitted.emit();
       },
       error: (err) => {
@@ -466,7 +468,18 @@ export class FestivalFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.formCancelled.emit();
+    if (this.isEditMode && !this.viewMode()) {
+      this.viewMode.set(true);
+      this.festivalForm.disable();
+      // Reload initial data to discard changes
+      if (this.festival) {
+        this.updateFormValues(this.festival);
+        this.loadExistingClassesTarifaires(this.festival);
+        this.removedClasseTarifaireIds.clear();
+      }
+    } else {
+      this.formCancelled.emit();
+    }
   }
 
   canRemoveClasseTarifaire(index: number): boolean {

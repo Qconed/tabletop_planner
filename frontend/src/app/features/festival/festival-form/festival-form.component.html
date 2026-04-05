@@ -15,12 +15,11 @@
       @if (isEditMode && !isViewMode && authService.isAuthenticated()) {
         <button
           mat-icon-button
-          color="warn"
-          (click)="confirmDeleteFestival()"
-          class="delete-festival-button"
+          (click)="onCancel()"
+          class="cancel-button"
           [disabled]="isSubmitting"
-          aria-label="Supprimer le festival">
-          <mat-icon>delete</mat-icon>
+          aria-label="Annuler les modifications">
+          <mat-icon>close</mat-icon>
         </button>
       }
       @if (isEditMode && isViewMode && authService.isAuthenticated()) {
@@ -135,14 +134,23 @@
 
       <!-- Actions -->
       <div class="form-actions">
-        <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
-          @if (isViewMode) {
-            Fermer
-          } @else {
-            Annuler
-          }
-        </button>
+        @if (isEditMode && !isViewMode && authService.isAuthenticated()) {
+          <button
+            type="button"
+            mat-icon-button
+            color="warn"
+            (click)="confirmDeleteFestival()"
+            class="delete-festival-button"
+            [disabled]="isSubmitting"
+            aria-label="Supprimer le festival">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+        <div class="spacer"></div>
         @if (!isViewMode) {
+          <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
+              Annuler
+          </button>
           <button type="submit" mat-raised-button color="primary" [disabled]="isSubmitting">
             @if (isSubmitting) {
               Enregistrement...

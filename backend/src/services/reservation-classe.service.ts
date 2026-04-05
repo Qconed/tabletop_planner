@@ -69,8 +69,26 @@ export const reservationClasseService = {
   },
 
   async delete(id: number) {
-    return prisma.reservationClasse.delete({
-      where: { id },
+    return prisma.$transaction(async (tx) => {
+      // Find the class assignment before deleting to get IDs
+      const rc = await tx.reservationClasse.findUnique({
+        where: { id },
+        select: { idReservation: true, idClasseTarifaire: true },
+      });
+
+      if (rc) {
+        // Automatically unplace games that were in this class for this reservation
+        await tx.placementJeu.deleteMany({
+          where: {
+            idReservation: rc.idReservation,
+            idClasseTarifaire: rc.idClasseTarifaire,
+          },
+        });
+      }
+
+      return tx.reservationClasse.delete({
+        where: { id },
+      });
     });
   },
 };

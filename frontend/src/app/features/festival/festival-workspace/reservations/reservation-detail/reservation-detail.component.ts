@@ -144,11 +144,18 @@ export class ReservationDetailComponent implements OnInit {
   }
 
   toggleEditMode(): void {
-    this.isEditMode.set(!this.isEditMode());
-    if (this.isEditMode()) {
+    const nextMode = !this.isEditMode();
+    this.isEditMode.set(nextMode);
+    
+    if (nextMode) {
       this.form.enable();
     } else {
       this.form.disable();
+      // Revert form state to match original reservation data on Cancel
+      const current = this.reservation();
+      if (current) {
+        this.setReservationInForm(current);
+      }
     }
   }
 

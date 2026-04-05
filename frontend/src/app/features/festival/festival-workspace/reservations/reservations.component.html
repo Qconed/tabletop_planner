@@ -31,7 +31,9 @@
               <th>Éditeur</th>
               <th>Classes</th>
               <th>Tables totales</th>
-              <th>Statut</th>
+              @if (authService.isAuthenticated()) {
+                <th>Statut</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -40,11 +42,13 @@
                 <td>{{ reservation.editeur?.libelle || 'Éditeur inconnu' }}</td>
                 <td>{{ reservation._count?.reservationClasses || 0 }}</td>
                 <td>{{ reservation.nbTablesResa }}</td>
-                <td>
-                  <span class="statut-badge" [attr.data-statut]="reservation.statut">
-                    {{ formatStatut(reservation.statut) }}
-                  </span>
-                </td>
+                @if (authService.isAuthenticated()) {
+                  <td>
+                    <span class="statut-badge" [attr.data-statut]="reservation.statut">
+                      {{ formatStatut(reservation.statut) }}
+                    </span>
+                  </td>
+                }
               </tr>
             }
           </tbody>

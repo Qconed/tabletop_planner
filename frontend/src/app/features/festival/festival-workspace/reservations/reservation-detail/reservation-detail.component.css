@@ -263,3 +263,14 @@ mat-dialog-actions {
   border-top: 1px solid var(--color-border);
 }
 
+.no-access-message {
+  padding: var(--spacing-md);
+  background: color-mix(in srgb, var(--color-background) 2%, white);
+  border-radius: var(--radius-sm);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  border-left: 4px solid var(--color-border);
+  margin: 0;
+}
+
+

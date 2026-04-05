@@ -8,7 +8,7 @@
           Détails de la réservation
         }
       </h2>
-      @if (reservation(); as res) {
+      @if (authService.isAuthenticated() && reservation(); as res) {
         <span class="statut-badge" [attr.data-statut]="res.statut">
           {{ formatStatut(res.statut) }}
         </span>
@@ -45,21 +45,25 @@
             }
           </div>
 
-          <div class="form-grid">
-            <label>
-              Statut
-              <select formControlName="statut">
-                @for (statut of statuts; track statut) {
-                  <option [value]="statut">{{ formatStatut(statut) }}</option>
-                }
-              </select>
-            </label>
+          @if (authService.isAuthenticated()) {
+            <div class="form-grid">
+              <label>
+                Statut
+                <select formControlName="statut">
+                  @for (statut of statuts; track statut) {
+                    <option [value]="statut">{{ formatStatut(statut) }}</option>
+                  }
+                </select>
+              </label>
 
-            <label>
-              Notes
-              <textarea rows="3" formControlName="notesResa" placeholder="Aucune note"></textarea>
-            </label>
-          </div>
+              <label>
+                Notes
+                <textarea rows="3" formControlName="notesResa" placeholder="Aucune note"></textarea>
+              </label>
+            </div>
+          } @else {
+            <p class="no-access-message">Vous n'avez pas les permissions pour consulter les détails internes cette réservation.</p>
+          }
         </section>
 
         @if (isEditMode()) {

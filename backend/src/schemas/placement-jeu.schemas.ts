@@ -13,6 +13,7 @@ export const createPlacementJeuSchema = z.object({
 });
 
 export const updatePlacementJeuSchema = z.object({
+  idClasseTarifaire: z.number().int().positive().optional(),
   nbTables: z.number().int().positive().optional(),
   quantiteJeu: z.number().int().positive().optional(),
 });

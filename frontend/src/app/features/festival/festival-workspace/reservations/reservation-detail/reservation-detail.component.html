@@ -66,31 +66,91 @@
           }
         </section>
 
-        @if (isEditMode()) {
-          <section class="games-search-section">
+        @if (isEditMode() || (reservation.jeuxReservations && reservation.jeuxReservations.length > 0)) {
+          <section class="games-management-section">
             <div class="section-header">
-              <h3>Rechercher un jeu</h3>
-            </div>
-            <app-autocomplete-search-bar
-              label="Rechercher un jeu (pour information)"
-              [fetchOptions]="jeuOptionsProvider"
-              (optionSelected)="onJeuOptionSelected($event)"
-            ></app-autocomplete-search-bar>
-
-            @if (selectedJeu(); as jeu) {
-              <div class="selected-jeu-info">
-                <p><strong>Jeu sélectionné :</strong> {{ jeu.libelle }}</p>
-                @if (jeu.auteur) {
-                  <p><strong>Auteur :</strong> {{ jeu.auteur }}</p>
-                }
-                @if (jeu.description) {
-                  <p class="description">{{ jeu.description }}</p>
-                }
-                @if (jeu.imageJeu) {
-                  <img [src]="jeu.imageJeu" [alt]="jeu.libelle" class="jeu-thumbnail" />
+              <h3>Gestion des jeux</h3>
+              <div class="capacity-summary">
+                @for (rc of reservation.reservationClasses; track rc.idClasseTarifaire) {
+                  <span class="usage-badge" [class.over-capacity]="getTablesUsedInClass(rc.idClasseTarifaire) > rc.nbTables">
+                    {{ rc.classeTarifaire?.libelle }}: {{ getTablesUsedInClass(rc.idClasseTarifaire) }}/{{ rc.nbTables }}
+                  </span>
                 }
               </div>
+            </div>
+
+            @if (isEditMode()) {
+              <div class="search-box">
+                <app-autocomplete-search-bar
+                  label="Rechercher un jeu à ajouter"
+                  [fetchOptions]="jeuOptionsProvider"
+                  (optionSelected)="onJeuOptionSelected($event)"
+                ></app-autocomplete-search-bar>
+              </div>
             }
+
+            <div class="table-responsive">
+              <table class="games-table">
+                <thead>
+                  <tr>
+                    <th>Jeu</th>
+                    <th>Classe Tarifaire</th>
+                    <th>Nb Tables</th>
+                    <th>Quantité</th>
+                    @if (isEditMode()) {
+                      <th>Actions</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of allGames(); track row.jr.idJeu) {
+                    <tr>
+                      <td class="game-name-cell">
+                        <strong>{{ row.jr.jeu?.libelle }}</strong>
+                      </td>
+                      <td>
+                        @if (isEditMode()) {
+                          <select [value]="row.pj?.idClasseTarifaire || 0" (change)="onGameClassChange(row.jr, +$any($event.target).value, row.pj)">
+                            <option [value]="0">Non placé</option>
+                            @for (rc of currentReservationClasses; track rc.idClasseTarifaire) {
+                              <option [value]="rc.idClasseTarifaire">{{ rc.libelle }}</option>
+                            }
+                          </select>
+                        } @else {
+                          {{ row.pj?.classeTarifaire?.libelle || 'Non placé' }}
+                        }
+                      </td>
+                      <td>
+                        @if (isEditMode() && row.pj) {
+                          <input type="number" min="1" [value]="row.pj.nbTables" (change)="updateGameTables(row.pj, +$any($event.target).value)" class="small-input" />
+                        } @else {
+                          {{ row.pj?.nbTables || '-' }}
+                        }
+                      </td>
+                      <td>
+                        @if (isEditMode()) {
+                          <input type="number" min="1" [value]="row.jr.quantite" (change)="updateGameQuantity(row.jr, +$any($event.target).value)" class="small-input" />
+                        } @else {
+                          {{ row.jr.quantite }}
+                        }
+                      </td>
+                      @if (isEditMode()) {
+                        <td>
+                          <button type="button" class="btn-danger-icon" (click)="deleteGameFromReservation(row.jr)" title="Supprimer">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                  @if (allGames().length === 0) {
+                    <tr>
+                      <td colspan="5" class="empty-cell">Aucun jeu ajouté à cette réservation</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </section>
         }
 

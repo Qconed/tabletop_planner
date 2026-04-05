@@ -149,31 +149,107 @@ textarea {
   resize: vertical;
 }
 
-.games-search-section {
-  padding: var(--spacing-md);
-  background: color-mix(in srgb, var(--color-primary) 3%, white);
-  border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 10%, white);
-}
-
-.selected-jeu-info {
-  margin-top: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: white;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--spacing-sm);
-  box-shadow: var(--shadow-sm);
-}
-
 .jeu-thumbnail {
   width: 64px;
   height: 64px;
   object-fit: cover;
   border-radius: var(--radius-sm);
 }
+
+.games-management-section {
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.search-box {
+  margin-bottom: var(--spacing-md);
+}
+
+.capacity-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: white;
+}
+
+.games-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.games-table th {
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: color-mix(in srgb, var(--color-background) 2%, white);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.games-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, white);
+  vertical-align: middle;
+}
+
+.games-table tr:last-child td {
+  border-bottom: none;
+}
+
+.game-name-cell {
+  color: var(--color-text-primary);
+}
+
+.small-input {
+  width: 60px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+.games-table select {
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 200px;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: var(--spacing-xl) !important;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.usage-badge {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-background) 2%, white);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+}
+
+.usage-badge.over-capacity {
+  color: #dc2626;
+  background: #fef2f2;
+  font-weight: 700;
+  border-color: #fecaca;
+}
+
+
 
 .classes-section {
   padding-top: var(--spacing-md);

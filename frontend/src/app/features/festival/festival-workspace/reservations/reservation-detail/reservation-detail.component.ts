@@ -8,9 +8,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ClasseTarifaire } from '../../../../../core/models/classe-tarifaire.model';
 import { Reservation, ReservationClasse, StatutWorkflow } from '../../../../../core/models/reservation.model';
+import { PlacementJeu } from '../../../../../core/models/placement-jeu.model';
+import { JeuReservation } from '../../../../../core/models/jeu-reservation.model';
 import { ClasseTarifaireService } from '../../../../../core/services/classe-tarifaire.service';
 import { ReservationClasseService } from '../../../../../core/services/reservation-classe.service';
 import { ReservationService } from '../../../../../core/services/reservation.service';
+import { JeuReservationService } from '../../../../../core/services/jeu-reservation.service';
+import { PlacementJeuService } from '../../../../../core/services/placement-jeu.service';
 import { FestivalWorkspaceStore } from '../../../../../core/store/festival-workspace.store';
 import { AuthService } from '../../../../../core/services/auth.service';
 import {
@@ -46,6 +50,14 @@ export class ReservationDetailComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly selectedJeu = signal<Jeu | null>(null);
+  readonly unplacedGames = signal<JeuReservation[]>([]);
+  readonly placementsByClass = signal<Map<number, PlacementJeu[]>>(new Map());
+  readonly editingPlacementId = signal<number | null>(null);
+  readonly editingUnplacedGameId = signal<number | null>(null);
+  readonly allGames = signal<Array<{
+    jr: JeuReservation,
+    pj?: PlacementJeu
+  }>>([]);
 
   readonly jeuOptionsProvider = (search?: string) =>
     this.jeuService.searchByName(search).pipe(
@@ -81,6 +93,20 @@ export class ReservationDetailComponent implements OnInit {
     return this.form.get('reservationClasses') as FormArray;
   }
 
+  get currentReservationClasses(): Array<{ idClasseTarifaire: number, libelle: string }> {
+    const res = this.reservation();
+    if (!res) return [];
+    
+    return this.reservationClasses.controls.map(control => {
+      const id = Number(control.get('idClasseTarifaire')?.value);
+      const classe = this.classesTarifaires().find(c => c.id === id);
+      return {
+        idClasseTarifaire: id,
+        libelle: classe?.libelle || `Classe #${id}`
+      };
+    }).filter(c => c.idClasseTarifaire > 0);
+  }
+
   constructor(
     @Optional() @Inject(MAT_DIALOG_DATA) public data: { reservationId: number },
     @Optional() private readonly dialogRef: MatDialogRef<ReservationDetailComponent>,
@@ -88,6 +114,8 @@ export class ReservationDetailComponent implements OnInit {
     private readonly reservationClasseService: ReservationClasseService,
     private readonly reservationService: ReservationService,
     private readonly jeuService: JeuService,
+    private readonly jeuReservationService: JeuReservationService,
+    private readonly placementJeuService: PlacementJeuService,
     private readonly workspaceStore: FestivalWorkspaceStore,
     public readonly authService: AuthService
   ) {}
@@ -247,7 +275,6 @@ export class ReservationDetailComponent implements OnInit {
         this.isSaving.set(false);
         this.isEditMode.set(false);
         this.form.disable();
-        // If it's a dialog, close it and return true to indicate success
         if (this.dialogRef) {
           this.dialogRef.close(true);
         }
@@ -304,7 +331,109 @@ export class ReservationDetailComponent implements OnInit {
 
   onJeuOptionSelected(option: AutocompleteSearchOption): void {
     const jeu = option.meta as Jeu | undefined;
-    this.selectedJeu.set(jeu ?? null);
+    if (!jeu) return;
+
+    const reservation = this.reservation();
+    if (!reservation) return;
+
+    const alreadyExists = reservation.jeuxReservations?.some(jr => jr.idJeu === jeu.id);
+    if (alreadyExists) {
+      this.errorMessage.set('Ce jeu est déjà présent dans la réservation.');
+      setTimeout(() => this.errorMessage.set(null), 3000);
+      return;
+    }
+
+    this.isSaving.set(true);
+    this.jeuReservationService.create({
+      idReservation: reservation.id,
+      idJeu: jeu.id,
+      quantite: 1
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (newJr) => {
+        this.refreshReservation();
+        this.successMessage.set(`${jeu.libelle} ajouté à la réservation.`);
+        setTimeout(() => this.successMessage.set(null), 3000);
+      },
+      error: (err) => {
+        this.errorMessage.set('Erreur lors de l\'ajout du jeu.');
+        this.isSaving.set(false);
+      }
+    });
+  }
+
+  onGameClassChange(jr: JeuReservation, newClassId: number, currentPj?: PlacementJeu): void {
+    const reservation = this.reservation();
+    if (!reservation) return;
+
+    this.isSaving.set(true);
+
+    if (newClassId === 0) {
+      if (currentPj) {
+        this.placementJeuService.delete(currentPj.id).subscribe({
+          next: () => this.refreshReservation(),
+          error: () => this.isSaving.set(false)
+        });
+      } else {
+        this.isSaving.set(false);
+      }
+    } else {
+      if (currentPj) {
+        this.placementJeuService.update(currentPj.id, { idClasseTarifaire: newClassId }).subscribe({
+          next: () => this.refreshReservation(),
+          error: () => this.isSaving.set(false)
+        });
+      } else {
+        this.placementJeuService.create({
+          idReservation: reservation.id,
+          idJeu: jr.idJeu,
+          idClasseTarifaire: newClassId,
+          nbTables: 1,
+          quantiteJeu: jr.quantite
+        }).subscribe({
+          next: () => this.refreshReservation(),
+          error: () => this.isSaving.set(false)
+        });
+      }
+    }
+  }
+
+  updateGameQuantity(jr: JeuReservation, quantite: number): void {
+    if (quantite < 1) return;
+    this.isSaving.set(true);
+    this.jeuReservationService.update(jr.idReservation, jr.idJeu, { quantite }).subscribe({
+      next: () => this.refreshReservation(),
+      error: () => this.isSaving.set(false)
+    });
+  }
+
+  updateGameTables(pj: PlacementJeu, nbTables: number): void {
+    if (nbTables < 1) return;
+    this.isSaving.set(true);
+    this.placementJeuService.update(pj.id, { nbTables }).subscribe({
+      next: () => this.refreshReservation(),
+      error: () => this.isSaving.set(false)
+    });
+  }
+
+  deleteGameFromReservation(jr: JeuReservation): void {
+    if (!confirm(`Supprimer ${jr.jeu?.libelle} de la réservation ?`)) return;
+    this.isSaving.set(true);
+    this.jeuReservationService.delete(jr.idReservation, jr.idJeu).subscribe({
+      next: () => this.refreshReservation(),
+      error: () => this.isSaving.set(false)
+    });
+  }
+
+  private refreshReservation(): void {
+    const res = this.reservation();
+    if (!res) return;
+    this.reservationService.getById(res.id).subscribe({
+      next: (updated) => {
+        this.setReservationInForm(updated);
+        this.isSaving.set(false);
+      },
+      error: () => this.isSaving.set(false)
+    });
   }
 
   private loadReservation(reservationId: number): void {
@@ -327,7 +456,6 @@ export class ReservationDetailComponent implements OnInit {
         }
         this.ensureClasseSelectionDefaults();
         this.isLoading.set(false);
-        // By default read-only and disable form
         this.isEditMode.set(false);
         this.form.disable();
       },
@@ -417,6 +545,28 @@ export class ReservationDetailComponent implements OnInit {
         nbTables: reservationClasse.nbTables,
       }));
     }
+
+    const allJr = reservation.jeuxReservations || [];
+    const allPj = reservation.placementsJeux || [];
+
+    const map = new Map<number, PlacementJeu[]>();
+    allPj.forEach(pj => {
+      const list = map.get(pj.idClasseTarifaire) || [];
+      list.push(pj);
+      map.set(pj.idClasseTarifaire, list);
+    });
+    this.placementsByClass.set(map);
+
+    const games = allJr.map(jr => ({
+      jr,
+      pj: allPj.find(pj => pj.idJeu === jr.idJeu)
+    }));
+    this.allGames.set(games);
+  }
+
+  getTablesUsedInClass(idClasseTarifaire: number): number {
+    const placements = this.placementsByClass().get(idClasseTarifaire) || [];
+    return placements.reduce((total, pj) => total + pj.nbTables, 0);
   }
 
   private createReservationClasseGroup(initial?: {

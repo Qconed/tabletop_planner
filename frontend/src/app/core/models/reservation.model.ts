@@ -1,5 +1,7 @@
 import { ClasseTarifaire } from './classe-tarifaire.model';
 import { Festival } from './festival.model';
+import { JeuReservation } from './jeu-reservation.model';
+import { PlacementJeu } from './placement-jeu.model';
 
 export type StatutWorkflow =
   | 'PAS_DE_CONTACT'
@@ -38,6 +40,8 @@ export interface Reservation {
   };
   festival?: Pick<Festival, 'id' | 'nom' | 'date'>;
   reservationClasses?: ReservationClasse[];
+  jeuxReservations?: JeuReservation[];
+  placementsJeux?: PlacementJeu[];
   _count?: {
     jeuxReservations: number;
     reservationClasses: number;

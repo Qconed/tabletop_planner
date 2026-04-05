@@ -68,6 +68,22 @@ export const placementJeuService = {
   },
 
   async create(data: CreatePlacementJeuInput) {
+    // S'assurer que la liaison Jeu-Reservation existe
+    await prisma.jeuReservation.upsert({
+      where: {
+        idReservation_idJeu: {
+          idReservation: data.idReservation,
+          idJeu: data.idJeu,
+        },
+      },
+      update: {}, // Ne rien changer si ça existe déjà
+      create: {
+        idReservation: data.idReservation,
+        idJeu: data.idJeu,
+        quantite: data.quantiteJeu,
+      },
+    });
+
     // Générer l'idJeuReservation composite
     const idJeuReservation = `${data.idReservation}-${data.idJeu}`;
 
@@ -92,6 +108,7 @@ export const placementJeuService = {
     return prisma.placementJeu.update({
       where: { id },
       data: {
+        ...(data.idClasseTarifaire !== undefined && { idClasseTarifaire: data.idClasseTarifaire }),
         ...(data.nbTables !== undefined && { nbTables: data.nbTables }),
         ...(data.quantiteJeu !== undefined && { quantiteJeu: data.quantiteJeu }),
       },
